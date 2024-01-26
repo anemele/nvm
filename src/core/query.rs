@@ -1,14 +1,7 @@
-use super::{get_path, is_node_path};
-use std::fs;
+use super::is_node_path;
+use std::{fs, path::Path};
 
-pub fn query_local() -> Option<(String, Vec<String>)> {
-    let tmp = get_path();
-    if tmp.is_none() {
-        eprintln!("fail to get paths");
-        return None;
-    }
-
-    let (all, bin, _) = tmp.unwrap();
+pub fn query_local(all: &Path, bin: &Path) -> Option<(String, Vec<String>)> {
     let tmp = fs::read_dir(&all);
     if tmp.is_err() {
         eprintln!("fail to read path: {}", all.display());

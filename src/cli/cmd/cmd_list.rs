@@ -1,7 +1,14 @@
-use crate::core::query_local;
+use crate::core::{get_path, query_local};
 
 pub fn cmd_list() {
-    let tmp = query_local();
+    let tmp = get_path();
+    if tmp.is_none() {
+        return;
+    }
+
+    let (all, bin, _) = tmp.unwrap();
+
+    let tmp = query_local(&all, &bin);
     if tmp.is_none() {
         return;
     }

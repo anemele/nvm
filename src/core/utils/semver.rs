@@ -2,27 +2,27 @@ use semver::Version;
 use std::collections::HashMap;
 use std::str::FromStr;
 
-pub type VersionMap = HashMap<String, String>;
+pub type VersionMap = HashMap<String, Version>;
 pub type VersionVec = Vec<String>;
 pub fn map_versions(versions: Vec<String>) -> (VersionMap, VersionVec) {
     let mut map = VersionMap::new();
     let mut vec = VersionVec::new();
 
-    let mut major = 0;
-    let mut minor = 0;
     for version in versions {
-        if let Ok(version) = Version::from_str(&version) {
-            if version.major != major {
-                major = version.major;
-                let key = major.to_string();
-                map.insert(key.clone(), version.to_string());
-                vec.push(key);
+        if let Ok(sv) = Version::from_str(&version) {
+            let major = sv.major.to_string();
+            if !map.contains_key(&major) {
+                map.insert(major.clone(), sv.clone());
+                vec.push(major);
+            } else if map[&major].lt(&sv) {
+                map.insert(major, sv.clone());
             }
-            if version.minor != minor {
-                minor = version.minor;
-                let key = format!("{}.{}", major, minor);
-                map.insert(key.clone(), version.to_string());
-                vec.push(key);
+            let mm = format!("{}.{}", sv.major, sv.minor);
+            if !map.contains_key(&mm) {
+                map.insert(mm.clone(), sv);
+                vec.push(mm);
+            } else if map[&mm].lt(&sv) {
+                map.insert(mm, sv);
             }
         }
     }

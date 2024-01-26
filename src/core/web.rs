@@ -46,6 +46,17 @@ fn test_get_index() {
     }
 }
 
+pub fn get_map_versions() -> (VersionMap, VersionVec) {
+    let indexes = get_index().unwrap();
+
+    let mut versions = vec![];
+    for index in indexes {
+        versions.push(index.version[1..].to_owned())
+    }
+
+    map_versions(versions)
+}
+
 pub fn get_dist(url: &str, path: &Path) -> bool {
     let mut res = match Client::new()
         .get(url)
@@ -55,6 +66,11 @@ pub fn get_dist(url: &str, path: &Path) -> bool {
         Err(_) => return false,
         Ok(res) => res,
     };
+
+    if !res.status().is_success() {
+        return false;
+    }
+
     let mut buf = vec![];
     match res.read_to_end(&mut buf) {
         Err(_) => return false,
@@ -69,15 +85,4 @@ pub fn get_dist(url: &str, path: &Path) -> bool {
             }
         }
     }
-}
-
-pub fn get_map_versions() -> (VersionMap, VersionVec) {
-    let indexes = get_index().unwrap();
-
-    let mut versions = vec![];
-    for index in indexes {
-        versions.push(index.version[1..].to_owned())
-    }
-
-    map_versions(versions)
 }
