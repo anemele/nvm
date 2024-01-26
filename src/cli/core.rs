@@ -7,7 +7,7 @@ pub enum Cli {
     /// List all installed nodejs
     #[clap(alias = "ls")]
     List,
-    /// List remote
+    /// List remote, by default only lts
     #[clap(alias = "lr")]
     ListRemote,
     /// Use some version
