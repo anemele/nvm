@@ -1,14 +1,13 @@
 use super::get_node_url;
+use super::map_versions;
+use super::{VersionMap, VersionVec};
 use reqwest;
 use reqwest::{blocking::Client, Result};
-use semver::Version;
 use serde::Deserialize;
 use serde_json::Value;
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
-use std::str::FromStr;
 
 #[derive(Debug, Deserialize)]
 pub struct Index {
@@ -72,33 +71,13 @@ pub fn get_dist(url: &str, path: &Path) -> bool {
     }
 }
 
-pub type VersionMap = HashMap<String, String>;
-pub type VersionVec = Vec<String>;
 pub fn get_map_versions() -> (VersionMap, VersionVec) {
     let indexes = get_index().unwrap();
 
-    let mut map = VersionMap::new();
-    let mut vec = VersionVec::new();
-
-    let mut major = 0;
-    let mut minor = 0;
+    let mut versions = vec![];
     for index in indexes {
-        if let Ok(version) = Version::from_str(&index.version[1..]) {
-            if version.major != major {
-                major = version.major;
-                let key = major.to_string();
-                map.insert(key.clone(), version.to_string());
-                vec.push(key);
-            }
-            if version.minor != minor {
-                minor = version.minor;
-                let key = format!("{}.{}", major, minor);
-                map.insert(key.clone(), version.to_string());
-                vec.push(key);
-            }
-        }
+        versions.push(index.version[1..].to_owned())
     }
 
-    vec.reverse();
-    (map, vec)
+    map_versions(versions)
 }
