@@ -1,57 +1,7 @@
-use super::{get_node_home, NODE_ALL, NODE_BIN, NODE_TMP};
-use super::{NODE_BASE_URL, NPM_BASE_URL};
-use serde_json::Value;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io;
 use std::path::Path;
-use std::{fs, path::PathBuf};
 use zip::ZipArchive;
-
-pub fn is_lts(lts: Value) -> bool {
-    match lts {
-        Value::String(_) => true,
-        Value::Bool(b) => b,
-        _ => false,
-    }
-}
-
-pub fn get_node_url(path: &str) -> String {
-    NODE_BASE_URL.to_string() + path
-}
-
-pub fn get_npm_url(path: &str) -> String {
-    NPM_BASE_URL.to_string() + path
-}
-
-pub fn get_path() -> Option<(PathBuf, PathBuf, PathBuf)> {
-    let home = get_node_home();
-    if !home.exists() {
-        if let Err(e) = fs::create_dir(&home) {
-            eprintln!("{}", e);
-            return None;
-        }
-    }
-
-    let all = home.join(NODE_ALL);
-    if !all.exists() {
-        if let Err(e) = fs::create_dir(&all) {
-            eprintln!("{}", e);
-            return None;
-        }
-    }
-
-    let tmp = home.join(NODE_TMP);
-    if !tmp.exists() {
-        if let Err(e) = fs::create_dir(&tmp) {
-            eprintln!("{}", e);
-            return None;
-        }
-    }
-
-    let bin = home.join(NODE_BIN);
-
-    Some((all, bin, tmp))
-}
 
 pub fn unzip(src: &Path, dst: &Path) {
     if let Ok(file) = File::open(src) {
@@ -87,7 +37,7 @@ pub fn unzip(src: &Path, dst: &Path) {
                             fs::create_dir_all(p).unwrap();
                         }
                     }
-                    let mut outfile = fs::File::create(&outpath).unwrap();
+                    let mut outfile = File::create(&outpath).unwrap();
                     io::copy(&mut fz, &mut outfile).unwrap();
                 }
             }

@@ -1,9 +1,8 @@
+use crate::core::get_index;
+use semver::Version;
 use std::str::FromStr;
 
-use super::get_index;
-use semver::Version;
-
-pub fn list_remote() {
+pub fn cmd_list_remote() {
     if let Ok(indexes) = get_index() {
         let num = 3;
         let mut ctr = 0;

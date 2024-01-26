@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
 
-use super::{get_dist_url, get_node_url, get_path, unzip, Indexes};
+use super::{get_node_url, Indexes};
 use reqwest;
 use reqwest::{blocking::Client, Result};
 
@@ -26,7 +26,7 @@ fn test_get_index() {
     }
 }
 
-fn get_dist(url: &str, path: &Path) -> bool {
+pub fn get_dist(url: &str, path: &Path) -> bool {
     let mut res = match Client::new()
         .get(url)
         .header("User-Agent", "NVM Client")
@@ -49,23 +49,4 @@ fn get_dist(url: &str, path: &Path) -> bool {
             }
         }
     }
-}
-
-pub fn install(version: &str) -> bool {
-    if let Some((all, _, tmp)) = get_path() {
-        let dst = all.join(format!("v{}", version));
-        if dst.exists() {
-            println!("exists: {}", dst.display());
-            return true;
-        }
-        let url = get_dist_url(version);
-        let (_, name) = url.rsplit_once("/").unwrap();
-        let zipfile = &tmp.join(name);
-        if get_dist(&url, &zipfile) {
-            unzip(&zipfile, &dst);
-            return true;
-        }
-    }
-
-    false
 }
