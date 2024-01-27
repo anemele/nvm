@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 pub type VersionMap = HashMap<String, Version>;
 pub type VersionVec = Vec<String>;
+
 pub fn map_versions(versions: Vec<String>) -> (VersionMap, VersionVec) {
     let mut map = VersionMap::new();
     let mut vec = VersionVec::new();

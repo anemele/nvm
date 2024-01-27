@@ -1,9 +1,11 @@
 mod consts;
-mod query;
-pub mod utils;
-mod web;
+mod local;
+mod remote;
+mod semver;
+mod utils;
 
 pub use consts::*;
-pub use query::*;
+pub use local::*;
+pub use remote::*;
+pub use semver::*;
 pub use utils::*;
-pub use web::*;

@@ -1,7 +1,6 @@
 use super::get_node_url;
 use super::map_versions;
 use super::{VersionMap, VersionVec};
-use reqwest;
 use reqwest::{blocking::Client, Result};
 use serde::Deserialize;
 use serde_json::Value;
