@@ -1,3 +1,3 @@
-# Node Version Manager
+# Nodejs Version Manager
 
 Used for Windows.
