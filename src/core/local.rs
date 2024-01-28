@@ -4,48 +4,46 @@ use std::io;
 use std::path::Path;
 use zip::ZipArchive;
 
-pub fn query_local(all: &Path, bin: &Path) -> Option<(String, Vec<String>)> {
-    let tmp = fs::read_dir(&all);
-    if tmp.is_err() {
+pub struct LocalVersions {
+    pub current: String,
+    pub versions: Vec<String>,
+}
+
+pub fn query_local(all: &Path, bin: &Path) -> Option<LocalVersions> {
+    let Ok(rd) = fs::read_dir(&all) else {
         eprintln!("fail to read path: {}", all.display());
         return None;
-    }
+    };
 
-    let current = if let Ok(link) = bin.read_link() {
-        link.file_name().unwrap().to_str().unwrap()[1..].to_string()
-    } else {
-        String::new()
+    let current = match bin.read_link() {
+        Ok(link) => link.file_name().unwrap().to_str().unwrap()[1..].to_string(),
+        Err(_) => String::new(),
     };
 
     let mut versions = vec![];
-    for de in tmp.unwrap() {
-        if de.is_err() {
+    for r in rd {
+        let Ok(de) = r else {
             continue;
-        }
-        let dir = de.unwrap().path();
+        };
+        let dir = de.path();
         if is_node_path(&dir) {
             let name = dir.file_name().unwrap().to_str().unwrap();
             versions.push(name[1..].to_string())
         }
     }
 
-    Some((current, versions))
+    Some(LocalVersions { current, versions })
 }
 
 pub fn unzip(src: &Path, dst: &Path) {
-    let tmp = File::open(src);
-    if tmp.is_err() {
+    let Ok(file) = File::open(src) else {
         return;
-    }
+    };
 
-    let file = tmp.unwrap();
-
-    let tmp = ZipArchive::new(file);
-    if tmp.is_err() {
+    let Ok(mut archive) = ZipArchive::new(file) else {
         return;
-    }
+    };
 
-    let mut archive = tmp.unwrap();
     for i in 0..archive.len() {
         let mut fz = archive.by_index(i).unwrap();
         let outpath = match fz.enclosed_name() {
@@ -57,7 +55,6 @@ pub fn unzip(src: &Path, dst: &Path) {
         };
 
         if (*fz.name()).ends_with('/') {
-            // println!("File {} extracted to \"{}\"", i, outpath.display());
             fs::create_dir_all(&outpath).unwrap();
             continue;
         }
@@ -67,7 +64,12 @@ pub fn unzip(src: &Path, dst: &Path) {
                 fs::create_dir_all(p).unwrap();
             }
         }
-        let mut outfile = File::create(&outpath).unwrap();
+
+        let Ok(mut outfile) = File::create(&outpath) else {
+            eprintln!("failed to create file: {}", outpath.display());
+            continue;
+        };
+
         io::copy(&mut fz, &mut outfile).unwrap();
     }
 }

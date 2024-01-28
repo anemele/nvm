@@ -1,23 +1,17 @@
 use crate::core::{get_path, query_local};
 
 pub fn cmd_list() {
-    let tmp = get_path();
-    if tmp.is_none() {
+    let Some((all, bin, _)) = get_path() else {
         return;
-    }
+    };
 
-    let (all, bin, _) = tmp.unwrap();
-
-    let tmp = query_local(&all, &bin);
-    if tmp.is_none() {
+    let Some(local_versions) = query_local(&all, &bin) else {
         return;
-    }
-
-    let (current, versions) = tmp.unwrap();
+    };
 
     let mut count = 0;
-    for node in versions {
-        if node == current {
+    for node in local_versions.versions {
+        if node == local_versions.current {
             println!("\x1b[32m* {}\x1b[m", node)
         } else {
             println!("  {}", node)

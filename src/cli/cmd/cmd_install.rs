@@ -1,14 +1,14 @@
 use crate::core::{get_dist, get_dist_url, get_map_versions, get_path, unzip};
 
 pub fn cmd_install(version: &str) {
-    let tmp_p: Option<(std::path::PathBuf, std::path::PathBuf, std::path::PathBuf)> = get_path();
-    if tmp_p.is_none() {
+    let Some((all, _, tmp)) = get_path() else {
         return;
-    }
+    };
 
-    let (all, _, tmp) = tmp_p.unwrap();
+    let Some((map, _)) = get_map_versions() else {
+        return;
+    };
 
-    let (map, _) = get_map_versions();
     let map_version = match map.get(version) {
         Some(v) => v.to_string(),
         None => version.to_string(),

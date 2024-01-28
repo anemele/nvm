@@ -3,31 +3,22 @@ use std::process::Command;
 use std::{fs, process::Stdio};
 
 pub fn cmd_use(version: &str) {
-    let tmp = get_path();
-    if tmp.is_none() {
+    let Some((all, bin, _)) = get_path() else {
         return;
-    }
-
-    let (all, bin, _) = tmp.unwrap();
-
-    let tmp = query_local(&all, &bin);
-    if tmp.is_none() {
-        return;
-    }
-
-    let (current, versions) = tmp.unwrap();
-    let (map, _) = map_versions(versions);
-
-    let o: String;
-    let map_version = match map.get(version) {
-        Some(s) => {
-            o = s.to_string();
-            o.as_str()
-        }
-        None => version,
     };
 
-    if map_version == current {
+    let Some(local_versions) = query_local(&all, &bin) else {
+        return;
+    };
+
+    let (map, _) = map_versions(local_versions.versions);
+
+    let map_version = match map.get(version) {
+        Some(s) => s.to_string(),
+        None => version.to_string(),
+    };
+
+    if map_version == local_versions.current {
         println!("current version is in use: {}", map_version);
         return;
     }

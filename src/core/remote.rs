@@ -45,15 +45,17 @@ fn test_get_index() {
     }
 }
 
-pub fn get_map_versions() -> (VersionMap, VersionVec) {
-    let indexes = get_index().unwrap();
+pub fn get_map_versions() -> Option<(VersionMap, VersionVec)> {
+    let Ok(indexes) = get_index() else {
+        return None;
+    };
 
     let mut versions = vec![];
     for index in indexes {
         versions.push(index.version[1..].to_owned())
     }
 
-    map_versions(versions)
+    Some(map_versions(versions))
 }
 
 pub fn get_dist(url: &str, path: &Path) -> bool {
@@ -73,15 +75,12 @@ pub fn get_dist(url: &str, path: &Path) -> bool {
     let mut buf = vec![];
     match res.read_to_end(&mut buf) {
         Err(_) => return false,
-        Ok(_) => {
-            if let Ok(mut file) = File::create(&path) {
-                match file.write(buf.as_slice()) {
-                    Ok(u) => u > 0,
-                    Err(_) => false,
-                }
-            } else {
-                false
-            }
-        }
+        Ok(_) => match File::create(&path) {
+            Err(_) => false,
+            Ok(mut file) => match file.write(buf.as_slice()) {
+                Ok(size) => size > 0,
+                Err(_) => false,
+            },
+        },
     }
 }

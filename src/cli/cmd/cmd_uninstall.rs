@@ -2,21 +2,15 @@ use crate::core::{get_path, map_versions, query_local};
 use std::fs;
 
 pub fn cmd_uninstall(version: &str) {
-    let tmp = get_path();
-    if tmp.is_none() {
+    let Some((all, bin, _)) = get_path() else {
         return;
-    }
+    };
 
-    let (all, bin, _) = tmp.unwrap();
-
-    let tmp = query_local(&all, &bin);
-    if tmp.is_none() {
+    let Some(local_versions) = query_local(&all, &bin) else {
         return;
-    }
+    };
 
-    let (current, versions) = tmp.unwrap();
-
-    let (map, _) = map_versions(versions);
+    let (map, _) = map_versions(local_versions.versions);
     let map_version = match map.get(version) {
         Some(v) => v.to_string(),
         None => version.to_string(),
@@ -26,7 +20,7 @@ pub fn cmd_uninstall(version: &str) {
     if want.is_dir() {
         let _ = fs::remove_dir_all(want);
         println!("removed: {}", map_version);
-        if map_version == current {
+        if map_version == local_versions.current {
             let _ = fs::remove_dir(bin);
         }
     } else {
