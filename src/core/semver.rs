@@ -34,3 +34,22 @@ pub fn map_versions(versions: Vec<String>) -> (VersionMap, VersionVec) {
     vec.reverse();
     (map, vec)
 }
+
+#[test]
+fn test_map_versions() {
+    let sample = vec![
+        "20.0.0", "19.1.0", "19.0.1", "18.19.0", "18.18.2", "18.18.1", "18.18.0", "18.17.1",
+    ];
+    let sample: Vec<String> = sample.into_iter().map(|s| s.to_string()).collect();
+    let (map, vec) = map_versions(sample);
+
+    assert_eq!(vec.len(), 9);
+    assert_eq!(
+        vec,
+        vec!["20", "20.0", "19", "19.1", "19.0", "18", "18.19", "18.18", "18.17"]
+    );
+    assert_eq!(map["20"], Version::new(20, 0, 0));
+    assert_eq!(map["19"], Version::new(19, 1, 0));
+    assert_eq!(map["18"], Version::new(18, 19, 0));
+    assert_eq!(map["18.18"], Version::new(18, 18, 2));
+}
