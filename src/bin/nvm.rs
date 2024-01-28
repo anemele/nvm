@@ -1,5 +1,5 @@
-use nvm::cli::run;
+use nvm::cli;
 
 pub fn main() {
-    run();
+    cli::run();
 }
