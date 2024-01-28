@@ -46,7 +46,7 @@ fn test_map_versions() {
     assert_eq!(vec.len(), 9);
     assert_eq!(
         vec,
-        vec!["20", "20.0", "19", "19.1", "19.0", "18", "18.19", "18.18", "18.17"]
+        vec!["18.17", "18.18", "18.19", "18", "19.0", "19.1", "19", "20.0", "20",]
     );
     assert_eq!(map["20"], Version::new(20, 0, 0));
     assert_eq!(map["19"], Version::new(19, 1, 0));
