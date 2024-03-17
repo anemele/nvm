@@ -2,7 +2,7 @@ use crate::core::{get_path, map_versions, query_local};
 use std::process::Command;
 use std::{fs, process::Stdio};
 
-pub fn cmd_use(version: &str) {
+pub fn r#use(version: &str) {
     let Some((all, bin, _)) = get_path() else {
         return;
     };

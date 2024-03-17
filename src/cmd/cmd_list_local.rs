@@ -1,6 +1,6 @@
 use crate::core::{get_path, query_local};
 
-pub fn cmd_list() {
+pub fn list_local() {
     let Some((all, bin, _)) = get_path() else {
         return;
     };

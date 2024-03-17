@@ -1,7 +1,7 @@
 use crate::core::{get_path, map_versions, query_local};
 use std::fs;
 
-pub fn cmd_uninstall(version: &str) {
+pub fn uninstall(version: &str) {
     let Some((all, bin, _)) = get_path() else {
         return;
     };
