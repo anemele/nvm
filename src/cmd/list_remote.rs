@@ -1,9 +1,11 @@
+use crate::local::{query_local, LocalVersions};
+use crate::remote::get_map_versions;
+use crate::utils::get_path;
+use colored::control::set_virtual_terminal;
 use colored::Colorize;
 use std::collections::HashSet;
 
-use crate::core::{get_map_versions, get_path, query_local, LocalVersions};
-
-pub fn list_remote() {
+pub fn exec() {
     let Some((map, vec)) = get_map_versions() else {
         return;
     };
@@ -23,6 +25,7 @@ pub fn list_remote() {
         local_versions_set.insert(v);
     }
 
+    set_virtual_terminal(true).unwrap();
     for key in vec {
         let v = map[&key].to_string();
         if v == local_versions.current {

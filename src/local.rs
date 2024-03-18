@@ -1,4 +1,4 @@
-use super::is_node_path;
+use crate::utils::is_node_path;
 use std::fs::{self, File};
 use std::io;
 use std::path::Path;

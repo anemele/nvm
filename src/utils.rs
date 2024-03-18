@@ -1,4 +1,4 @@
-use super::{NODE_ALL, NODE_BIN, NODE_HOME, NODE_TMP};
+use crate::consts::{NODE_ALL, NODE_BIN, NODE_HOME, NODE_TMP};
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;

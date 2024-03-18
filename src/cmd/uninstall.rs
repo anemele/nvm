@@ -1,7 +1,9 @@
-use crate::core::{get_path, map_versions, query_local};
+use crate::local::query_local;
+use crate::semver::map_versions;
+use crate::utils::get_path;
 use std::fs;
 
-pub fn uninstall(version: &str) {
+pub fn exec(version: &str) {
     let Some((all, bin, _)) = get_path() else {
         return;
     };

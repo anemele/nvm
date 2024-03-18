@@ -1,2 +1,6 @@
 pub mod cmd;
-mod core;
+mod consts;
+mod local;
+mod remote;
+mod semver;
+mod utils;

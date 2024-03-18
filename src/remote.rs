@@ -1,6 +1,6 @@
-use super::get_node_url;
-use super::map_versions;
-use super::{VersionMap, VersionVec};
+use crate::semver::map_versions;
+use crate::semver::{VersionMap, VersionVec};
+use crate::utils::get_node_url;
 use serde::Deserialize;
 use serde_json::Value;
 use std::fs::File;

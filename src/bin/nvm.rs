@@ -29,10 +29,10 @@ enum Cli {
 
 fn main() {
     match Cli::parse() {
-        Cli::List => cmd::list_local(),
-        Cli::ListRemote => cmd::list_remote(),
-        Cli::Use { version } => cmd::r#use(&version),
-        Cli::Install { version } => cmd::install(&version),
-        Cli::Uninstall { version } => cmd::uninstall(&version),
+        Cli::List => cmd::list_local::exec(),
+        Cli::ListRemote => cmd::list_remote::exec(),
+        Cli::Use { version } => cmd::r#use::exec(&version),
+        Cli::Install { version } => cmd::install::exec(&version),
+        Cli::Uninstall { version } => cmd::uninstall::exec(&version),
     }
 }
