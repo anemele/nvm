@@ -30,7 +30,7 @@ pub fn exec() {
         let v = map[&key].to_string();
         if v == local_versions.current {
             println!("* {:7}=>  {}", key.green(), v.green())
-        } else if local_versions_set.take(&v).is_some() {
+        } else if local_versions_set.get(&v).is_some() {
             println!("  {:7}=>  {}", key.green(), v.green())
         } else {
             println!("  {:7}=>  {}", key, v)
