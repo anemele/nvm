@@ -4,6 +4,7 @@ use std::io;
 use std::path::Path;
 use zip::ZipArchive;
 
+#[derive(Default)]
 pub struct LocalVersions {
     pub current: String,
     pub versions: Vec<String>,

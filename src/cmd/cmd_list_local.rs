@@ -1,4 +1,5 @@
 use crate::core::{get_path, query_local};
+use colored::Colorize;
 
 pub fn list_local() {
     let Some((all, bin, _)) = get_path() else {
@@ -9,16 +10,16 @@ pub fn list_local() {
         return;
     };
 
-    let mut count = 0;
+    if local_versions.versions.len() == 0 {
+        println!("no available. install first.");
+        return;
+    }
+
     for node in local_versions.versions {
         if node == local_versions.current {
-            println!("\x1b[32m* {}\x1b[m", node)
+            println!("* {}", node.green())
         } else {
             println!("  {}", node)
         }
-        count += 1;
-    }
-    if count == 0 {
-        println!("no available. install first.")
     }
 }
