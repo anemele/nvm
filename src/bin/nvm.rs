@@ -25,6 +25,9 @@ enum Cli {
     /// Uninstall some version
     #[clap(alias = "rm")]
     Uninstall { version: String },
+
+    /// Clean cache
+    Clean,
 }
 
 fn main() {
@@ -34,5 +37,6 @@ fn main() {
         Cli::Use { version } => cmd::r#use::exec(&version),
         Cli::Install { version } => cmd::install::exec(&version),
         Cli::Uninstall { version } => cmd::uninstall::exec(&version),
+        Cli::Clean => cmd::clean::exec(),
     }
 }

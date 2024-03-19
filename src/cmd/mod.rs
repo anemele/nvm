@@ -1,3 +1,4 @@
+pub mod clean;
 pub mod install;
 pub mod list_local;
 pub mod list_remote;
