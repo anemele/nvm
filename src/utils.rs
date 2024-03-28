@@ -5,17 +5,6 @@ use std::path::PathBuf;
 // use serde_json::Value;
 use homedir::get_my_home;
 
-pub fn get_node_url(path: &str) -> String {
-    format!("https://nodejs.org/dist/{}", path)
-}
-
-pub fn get_dist_url(version: &str) -> String {
-    format!(
-        "https://nodejs.org/dist/v{0}/node-v{0}-win-x64.zip",
-        version
-    )
-}
-
 // pub fn is_lts(lts: Value) -> bool {
 //     match lts {
 //         Value::String(_) => true,

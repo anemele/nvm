@@ -1,6 +1,5 @@
 use crate::local::query_local;
 use crate::utils::get_path;
-use colored::control::set_virtual_terminal;
 use colored::Colorize;
 
 pub fn exec() {
@@ -19,7 +18,12 @@ pub fn exec() {
 
     // See issue: https://github.com/colored-rs/colored/issues/76#issuecomment-616869300
     // and the solution: https://docs.rs/colored/1.9.3/x86_64-pc-windows-msvc/colored/control/fn.set_virtual_terminal.html
-    set_virtual_terminal(true).unwrap();
+    #[cfg(target_family = "windows")]
+    {
+        use colored::control::set_virtual_terminal;
+        set_virtual_terminal(true).unwrap();
+    }
+
     for v in local_versions.versions {
         if v == local_versions.current {
             println!("* {}", v.green())

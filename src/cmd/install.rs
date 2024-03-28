@@ -1,6 +1,18 @@
 use crate::local::unzip;
 use crate::remote::{get_dist, get_map_versions};
-use crate::utils::{get_dist_url, get_path};
+use crate::utils::get_path;
+
+fn get_dist_url(version: &str) -> String {
+    // node-v{v}-{os}-{arch}.{ext}
+    // v:   {semver}
+    // os:  win, linux, darwin
+    // arc: x64, x86, arm64, ...
+    // ext: zip, 7z, tar.gz, tar.xz
+    format!(
+        "https://nodejs.org/dist/v{0}/node-v{0}-win-x64.zip",
+        version
+    )
+}
 
 pub fn exec(version: &str) {
     let Some((all, _, tmp)) = get_path() else {

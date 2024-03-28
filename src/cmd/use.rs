@@ -1,8 +1,8 @@
 use crate::local::query_local;
 use crate::semver::map_versions;
 use crate::utils::get_path;
-use std::process::Command;
-use std::{fs, process::Stdio};
+use std::fs;
+use std::os::unix::fs::symlink;
 
 pub fn exec(version: &str) {
     let Some((all, bin, _)) = get_path() else {
@@ -34,24 +34,10 @@ pub fn exec(version: &str) {
     if bin.exists() {
         let _ = fs::remove_dir(&bin);
     }
-    match Command::new("cmd.exe")
-        .args([
-            "/c",
-            "mklink",
-            "/j",
-            bin.to_str().unwrap(),
-            want.to_str().unwrap(),
-        ])
-        .stdout(Stdio::null())
-        .status()
-    {
-        Ok(code) => {
-            if code.code().unwrap() == 0 {
-                println!("use {}", map_version)
-            } else {
-                println!("fail to use {}", version)
-            }
-        }
-        Err(e) => eprintln!("{}", e),
+
+    if symlink(want, bin).is_ok() {
+        println!("use {}", map_version)
+    } else {
+        println!("fail to use {}", version)
     }
 }

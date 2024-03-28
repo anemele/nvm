@@ -1,7 +1,6 @@
 use crate::local::{query_local, LocalVersions};
 use crate::remote::get_map_versions;
 use crate::utils::get_path;
-use colored::control::set_virtual_terminal;
 use colored::Colorize;
 use std::collections::HashSet;
 
@@ -25,7 +24,12 @@ pub fn exec() {
         local_versions_set.insert(v);
     }
 
-    set_virtual_terminal(true).unwrap();
+    #[cfg(target_family = "windows")]
+    {
+        use colored::control::set_virtual_terminal;
+        set_virtual_terminal(true).unwrap();
+    }
+
     for key in vec {
         let v = map[&key].to_string();
         if v == local_versions.current {

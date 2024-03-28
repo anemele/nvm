@@ -1,12 +1,10 @@
 use crate::semver::map_versions;
 use crate::semver::{VersionMap, VersionVec};
-use crate::utils::get_node_url;
 use serde::Deserialize;
 use serde_json::Value;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-use tinyget;
 
 #[derive(Debug, Deserialize)]
 pub struct Index {
@@ -24,6 +22,10 @@ pub struct Index {
 }
 
 pub type Indexes = Vec<Index>;
+
+fn get_node_url(path: &str) -> String {
+    format!("https://nodejs.org/dist/{}", path)
+}
 
 fn get_index() -> Option<Indexes> {
     let url = get_node_url("index.json");
