@@ -1,6 +1,7 @@
 use crate::local::unzip;
 use crate::remote::{get_dist, get_map_versions};
 use crate::utils::get_path;
+use std::env::consts::{ARCH, OS};
 
 fn get_dist_url(version: &str) -> String {
     // node-v{v}-{os}-{arch}.{ext}
@@ -8,8 +9,22 @@ fn get_dist_url(version: &str) -> String {
     // os:  win, linux, darwin
     // arc: x64, x86, arm64, ...
     // ext: zip, 7z, tar.gz, tar.xz
+
+    // use .7z on Windows, .xz on *NIX for a smaller size.
+    let (os, ext) = match OS {
+        "linux" => ("linux", "tar.xz"),
+        "macos" => ("darwin", "tar.xz"),
+        "windows" => ("win", "7z"),
+        _ => panic!("unsupported OS: {OS}"),
+    };
+    let arch = match ARCH {
+        "x86" => "x86",
+        "x86_64" => "x64",
+        "arm" => "arm64",
+        _ => panic!("unsupported ARCH: {ARCH}"),
+    };
     format!(
-        "https://nodejs.org/dist/v{0}/node-v{0}-win-x64.zip",
+        "https://nodejs.org/dist/v{0}/node-v{0}-{os}-{arch}.{ext}",
         version
     )
 }
