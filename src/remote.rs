@@ -54,7 +54,7 @@ pub fn get_map_versions() -> Option<(VersionMap, VersionVec)> {
     Some(map_versions(versions))
 }
 
-pub fn get_dist(url: &str, path: &Path) -> bool {
+pub fn download_dist(url: &str, path: &Path) -> bool {
     let res = match tinyget::get(url)
         .with_header("User-Agent", "NVM Client")
         .send()

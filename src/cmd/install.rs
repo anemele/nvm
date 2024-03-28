@@ -1,9 +1,14 @@
-use crate::local::unzip;
-use crate::remote::{get_dist, get_map_versions};
+use crate::remote::{download_dist, get_map_versions};
 use crate::utils::get_path;
 use std::env::consts::{ARCH, OS};
+use std::fs;
 
-fn get_dist_url(version: &str) -> String {
+struct Dist {
+    dir: String,
+    url: String,
+}
+
+fn get_dist(version: &str) -> Option<Dist> {
     // node-v{v}-{os}-{arch}.{ext}
     // v:   {semver}
     // os:  win, linux, darwin
@@ -15,18 +20,23 @@ fn get_dist_url(version: &str) -> String {
         "linux" => ("linux", "tar.xz"),
         "macos" => ("darwin", "tar.xz"),
         "windows" => ("win", "7z"),
-        _ => panic!("unsupported OS: {OS}"),
+        _ => {
+            eprintln!("unsupported OS: {OS}");
+            return None;
+        }
     };
     let arch = match ARCH {
         "x86" => "x86",
         "x86_64" => "x64",
         "arm" => "arm64",
-        _ => panic!("unsupported ARCH: {ARCH}"),
+        _ => {
+            eprintln!("unsupported ARCH: {ARCH}");
+            return None;
+        }
     };
-    format!(
-        "https://nodejs.org/dist/v{0}/node-v{0}-{os}-{arch}.{ext}",
-        version
-    )
+    let dir = format!("node-v{version}-{os}-{arch}");
+    let url = format!("https://nodejs.org/dist/v{version}/{dir}.{ext}");
+    Some(Dist { dir, url })
 }
 
 pub fn exec(version: &str) {
@@ -49,12 +59,35 @@ pub fn exec(version: &str) {
         return;
     }
 
-    let url = get_dist_url(&map_version);
-    let (_, name) = url.rsplit_once("/").unwrap();
-    let zipfile = &tmp.join(name);
+    let Some(dist) = get_dist(&map_version) else {
+        eprintln!("no dist found");
+        return;
+    };
 
-    if zipfile.exists() || get_dist(&url, &zipfile) {
-        unzip(&zipfile, &dst);
+    let (_, name) = dist.url.rsplit_once("/").unwrap();
+    let src = tmp.join(name);
+
+    if !src.exists() && !download_dist(&dist.url, &src) {
+        eprintln!("failed to download: {}", version);
+        return;
+    }
+
+    #[cfg(target_family = "unix")]
+    let ok = {
+        use std::process::Command;
+        Command::new("tar")
+            .arg("-xf")
+            .arg(src)
+            .arg("-C")
+            .arg(&all)
+            .status()
+            .is_ok_and(|s| s.success())
+    };
+
+    #[cfg(target_family = "windows")]
+    let ok = { sevenz_rust::decompress_file(src, &all).is_ok() };
+
+    if ok && fs::rename(all.join(dist.dir), dst).is_ok() {
         println!("installed: {}", map_version)
     } else {
         println!("failed to install: {}", version)
