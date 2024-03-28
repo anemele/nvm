@@ -2,7 +2,6 @@ use crate::local::query_local;
 use crate::semver::map_versions;
 use crate::utils::get_path;
 use std::fs;
-use std::os::unix::fs::symlink;
 
 pub fn exec(version: &str) {
     let Some((all, bin, _)) = get_path() else {
@@ -35,9 +34,46 @@ pub fn exec(version: &str) {
         let _ = fs::remove_dir(&bin);
     }
 
-    if symlink(want, bin).is_ok() {
-        println!("use {}", map_version)
-    } else {
-        println!("fail to use {}", version)
+    #[cfg(target_family = "windows")]
+    {
+        // This method requires run as admin
+        // use std::os::windows::fs::symlink_dir;
+        // if let Err(e) = symlink_dir(want, bin) {
+        //     eprintln!("{}", e)
+        // } else {
+        //     println!("use {}", map_version)
+        // }
+
+        use std::process::Command;
+        use std::process::Stdio;
+        match Command::new("cmd.exe")
+            .arg("/c")
+            .arg("mklink")
+            .arg("/j")
+            .arg(bin.to_str().unwrap())
+            .arg(want.to_str().unwrap())
+            .stdout(Stdio::null())
+            .status()
+        {
+            Ok(code) => {
+                if code.code().unwrap() == 0 {
+                    println!("use {}", map_version)
+                } else {
+                    println!("fail to use {}", version)
+                }
+            }
+            Err(e) => eprintln!("{}", e),
+        }
+    }
+
+    #[cfg(target_family = "unix")]
+    {
+        use std::os::unix::fs::symlink;
+
+        if symlink(want, bin).is_ok() {
+            println!("use {}", map_version)
+        } else {
+            println!("fail to use {}", version)
+        }
     }
 }
