@@ -5,38 +5,39 @@ use std::fs;
 
 struct Dist {
     dir: String,
+    ext: String,
     url: String,
 }
 
-fn get_dist(version: &str) -> Option<Dist> {
+fn get_dist(version: &str) -> Dist {
     // node-v{v}-{os}-{arch}.{ext}
     // v:   {semver}
     // os:  win, linux, darwin
     // arc: x64, x86, arm64, ...
     // ext: zip, 7z, tar.gz, tar.xz
 
-    // use .7z on Windows, .xz on *NIX for a smaller size.
-    let (os, ext) = match OS {
-        "linux" => ("linux", "tar.xz"),
-        "macos" => ("darwin", "tar.xz"),
-        "windows" => ("win", "7z"),
-        _ => {
-            eprintln!("unsupported OS: {OS}");
-            return None;
-        }
+    let os = match OS {
+        "windows" => "win",
+        "macos" => "darwin",
+        x => x,
+    };
+    // use .7z on Windows, tar.xz on *NIX for a smaller size.
+    let ext = match os {
+        "win" => "7z",
+        _ => "tar.xz",
     };
     let arch = match ARCH {
-        "x86" => "x86",
         "x86_64" => "x64",
         "arm" => "arm64",
-        _ => {
-            eprintln!("unsupported ARCH: {ARCH}");
-            return None;
-        }
+        x => x,
     };
     let dir = format!("node-v{version}-{os}-{arch}");
     let url = format!("https://nodejs.org/dist/v{version}/{dir}.{ext}");
-    Some(Dist { dir, url })
+    Dist {
+        dir,
+        ext: ext.to_string(),
+        url,
+    }
 }
 
 pub fn exec(version: &str) {
@@ -59,19 +60,15 @@ pub fn exec(version: &str) {
         return;
     }
 
-    let Some(dist) = get_dist(&map_version) else {
-        eprintln!("no dist found");
-        return;
-    };
+    let dist = get_dist(&map_version);
 
-    let (_, name) = dist.url.rsplit_once("/").unwrap();
-    let src = tmp.join(name);
+    let src = tmp.join(format!("{}.{}", dist.dir, dist.ext));
 
     if !src.exists() && !download_dist(&dist.url, &src) {
         eprintln!("failed to download: {}", version);
         return;
     }
-
+    println!("{}==>{}", src.display(), all.display());
     #[cfg(target_family = "unix")]
     let ok = {
         use std::process::Command;
@@ -85,7 +82,7 @@ pub fn exec(version: &str) {
     };
 
     #[cfg(target_family = "windows")]
-    let ok = { sevenz_rust::decompress_file(src, &all).is_ok() };
+    let ok = sevenz_rust::decompress_file(src, &all).is_ok();
 
     if ok && fs::rename(all.join(dist.dir), dst).is_ok() {
         println!("installed: {}", map_version)

@@ -55,23 +55,23 @@ pub fn get_map_versions() -> Option<(VersionMap, VersionVec)> {
 }
 
 pub fn download_dist(url: &str, path: &Path) -> bool {
-    let res = match tinyget::get(url)
+    let Ok(res) = tinyget::get(url)
         .with_header("User-Agent", "NVM Client")
         .send()
-    {
-        Err(_) => return false,
-        Ok(res) => res,
+    else {
+        return false;
     };
 
     if res.status_code >= 300 {
         return false;
     }
 
-    match File::create(&path) {
-        Err(_) => false,
-        Ok(mut file) => match file.write(res.as_bytes()) {
-            Ok(size) => size > 0,
-            Err(_) => false,
-        },
-    }
+    let Ok(mut file) = File::create(&path) else {
+        return false;
+    };
+    let Ok(size) = file.write(res.as_bytes()) else {
+        return false;
+    };
+
+    size > 0
 }
