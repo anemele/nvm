@@ -8,7 +8,7 @@ pub fn exec(version: &str) {
         return;
     };
 
-    let Some(local_versions) = query_local(&all, &bin) else {
+    let Some(local_versions) = query_local(&all) else {
         return;
     };
 
@@ -20,10 +20,13 @@ pub fn exec(version: &str) {
 
     let want = all.join(&format!("v{}", map_version));
     if want.is_dir() {
-        let _ = fs::remove_dir_all(want);
-        println!("removed: {}", map_version);
-        if map_version == local_versions.current {
-            let _ = fs::remove_dir(bin);
+        if fs::remove_dir_all(want).is_ok() {
+            println!("removed: {}", map_version);
+            if map_version == local_versions.current {
+                let _ = fs::remove_dir(bin);
+            }
+        } else {
+            eprintln!("failed to remove: {}", map_version)
         }
     } else {
         println!("not found: {}", version)

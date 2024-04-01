@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+use std::process::{Command, Stdio};
 
 #[derive(Default)]
 pub struct LocalVersions {
@@ -19,27 +20,26 @@ fn is_node_path(path: &Path) -> bool {
     start_with_v && node_exist
 }
 
-pub fn query_local(all: &Path, bin: &Path) -> Option<LocalVersions> {
+pub fn query_local(all: &Path) -> Option<LocalVersions> {
     let Ok(rd) = fs::read_dir(&all) else {
         eprintln!("fail to read path: {}", all.display());
         return None;
     };
 
-    let current = match bin.read_link() {
-        Err(_) => String::new(),
-        Ok(link) => {
-            #[cfg(target_family = "unix")]
-            let link = {
-                let mut ancestors = link.ancestors();
-                ancestors.next();
-                ancestors.next()
-            }
-            .unwrap();
+    let mut current = String::new();
 
-            // These f**king unwraps :)
-            link.file_name().unwrap().to_str().unwrap()[1..].to_string()
+    if let Ok(output) = Command::new("node")
+        .arg("--version")
+        .stdout(Stdio::piped())
+        .output()
+    {
+        if let Some(v) = String::from_utf8_lossy(output.stdout.as_slice())
+            .trim_end()
+            .strip_prefix("v")
+        {
+            current = v.to_string()
         }
-    };
+    }
 
     let mut versions = vec![];
     for r in rd {

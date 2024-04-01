@@ -3,11 +3,11 @@ use crate::utils::get_path;
 use colored::Colorize;
 
 pub fn exec() {
-    let Some((all, bin, _)) = get_path() else {
+    let Some((all, _, _)) = get_path() else {
         return;
     };
 
-    let Some(local_versions) = query_local(&all, &bin) else {
+    let Some(local_versions) = query_local(&all) else {
         return;
     };
 

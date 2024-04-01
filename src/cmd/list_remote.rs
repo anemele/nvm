@@ -9,12 +9,8 @@ pub fn exec() {
         return;
     };
 
-    let local_versions = if let Some((all, bin, _)) = get_path() {
-        if let Some(local_versions) = query_local(&all, &bin) {
-            local_versions
-        } else {
-            LocalVersions::default()
-        }
+    let local_versions = if let Some((all, _, _)) = get_path() {
+        query_local(&all).unwrap_or_default()
     } else {
         LocalVersions::default()
     };

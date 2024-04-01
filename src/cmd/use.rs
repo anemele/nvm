@@ -8,7 +8,7 @@ pub fn exec(version: &str) {
         return;
     };
 
-    let Some(local_versions) = query_local(&all, &bin) else {
+    let Some(local_versions) = query_local(&all) else {
         return;
     };
 
