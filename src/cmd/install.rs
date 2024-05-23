@@ -63,7 +63,9 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
     if !src.exists() && !download_dist(&dist.url, &src) {
         return Err(anyhow!("failed to download: {}", version));
     }
-    println!("{}==>{}", src.display(), all.display());
+    // dbg!(&src);
+    // dbg!(&all);
+
     #[cfg(target_family = "unix")]
     let ok = {
         use std::process::Command;
