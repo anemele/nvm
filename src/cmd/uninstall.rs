@@ -1,16 +1,13 @@
 use crate::local::query_local;
 use crate::semver::map_versions;
 use crate::utils::get_path;
+use anyhow::anyhow;
 use std::fs;
 
-pub fn exec(version: &str) {
-    let Some((all, bin, _)) = get_path() else {
-        return;
-    };
+pub fn exec(version: &str) -> anyhow::Result<()> {
+    let (all, bin, _) = get_path()?;
 
-    let Some(local_versions) = query_local(&all) else {
-        return;
-    };
+    let local_versions = query_local(&all).ok_or(anyhow!(""))?;
 
     let (map, _) = map_versions(local_versions.versions);
     let map_version = match map.get(version) {
@@ -31,4 +28,6 @@ pub fn exec(version: &str) {
     } else {
         println!("not found: {}", version)
     }
+
+    Ok(())
 }

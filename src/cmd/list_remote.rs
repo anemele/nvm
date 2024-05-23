@@ -4,12 +4,10 @@ use crate::utils::get_path;
 use colored::Colorize;
 use std::collections::HashSet;
 
-pub fn exec() {
-    let Some((map, vec)) = get_map_versions() else {
-        return;
-    };
+pub fn exec() -> anyhow::Result<()> {
+    let (map, vec) = get_map_versions()?;
 
-    let local_versions = if let Some((all, _, _)) = get_path() {
+    let local_versions = if let Ok((all, _, _)) = get_path() {
         query_local(&all).unwrap_or_default()
     } else {
         LocalVersions::default()
@@ -36,4 +34,6 @@ pub fn exec() {
             println!("  {:7}=>  {}", key, v)
         }
     }
+
+    Ok(())
 }

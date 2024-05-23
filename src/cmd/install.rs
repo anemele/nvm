@@ -1,5 +1,6 @@
 use crate::remote::{download_dist, get_map_versions};
 use crate::utils::get_path;
+use anyhow::anyhow;
 use std::env::consts::{ARCH, OS};
 use std::fs;
 
@@ -40,14 +41,9 @@ fn get_dist(version: &str) -> Dist {
     }
 }
 
-pub fn exec(version: &str) {
-    let Some((all, _, tmp)) = get_path() else {
-        return;
-    };
-
-    let Some((map, _)) = get_map_versions() else {
-        return;
-    };
+pub fn exec(version: &str) -> anyhow::Result<()> {
+    let (all, _, tmp) = get_path()?;
+    let (map, _) = get_map_versions()?;
 
     let map_version = match map.get(version) {
         Some(v) => v.to_string(),
@@ -57,7 +53,7 @@ pub fn exec(version: &str) {
     let dst = all.join(format!("v{}", map_version));
     if dst.exists() {
         println!("exists: {}", dst.display());
-        return;
+        return Ok(());
     }
 
     let dist = get_dist(&map_version);
@@ -65,8 +61,7 @@ pub fn exec(version: &str) {
     let src = tmp.join(format!("{}.{}", dist.dir, dist.ext));
 
     if !src.exists() && !download_dist(&dist.url, &src) {
-        eprintln!("failed to download: {}", version);
-        return;
+        return Err(anyhow!("failed to download: {}", version));
     }
     println!("{}==>{}", src.display(), all.display());
     #[cfg(target_family = "unix")]
@@ -89,4 +84,6 @@ pub fn exec(version: &str) {
     } else {
         println!("failed to install: {}", version)
     }
+
+    Ok(())
 }

@@ -1,16 +1,13 @@
 use crate::local::query_local;
 use crate::semver::map_versions;
 use crate::utils::get_path;
+use anyhow::anyhow;
 use std::fs;
 
-pub fn exec(version: &str) {
-    let Some((all, bin, _)) = get_path() else {
-        return;
-    };
+pub fn exec(version: &str) -> anyhow::Result<()> {
+    let (all, bin, _) = get_path()?;
 
-    let Some(local_versions) = query_local(&all) else {
-        return;
-    };
+    let local_versions = query_local(&all).ok_or(anyhow!(""))?;
 
     let (map, _) = map_versions(local_versions.versions);
 
@@ -21,7 +18,7 @@ pub fn exec(version: &str) {
 
     if map_version == local_versions.current {
         println!("current version is in use: {}", map_version);
-        return;
+        return Ok(());
     }
 
     let want = all.join(format!("v{}", map_version));
@@ -30,16 +27,13 @@ pub fn exec(version: &str) {
 
     if !want.exists() {
         println!("not found: {}", version);
-        return;
+        return Ok(());
     }
 
     #[cfg(target_family = "windows")]
     {
-        if bin.exists() {
-            if fs::remove_dir(&bin).is_err() {
-                eprintln!("failed to remove link: {}", bin.display());
-                return;
-            }
+        if bin.exists() && fs::remove_dir(&bin).is_err() {
+            return Err(anyhow!("failed to remove link: {}", bin.display()));
         }
 
         // This method requires run as admin
@@ -70,11 +64,8 @@ pub fn exec(version: &str) {
 
     #[cfg(target_family = "unix")]
     {
-        if bin.exists() {
-            if fs::remove_file(&bin).is_err() {
-                eprintln!("failed to remove link: {}", bin.display());
-                return;
-            }
+        if bin.exists() && fs::remove_file(&bin).is_err() {
+            return Err(anyhow!("failed to remove link: {}", bin.display()));
         }
 
         use std::os::unix::fs::symlink;
@@ -85,4 +76,6 @@ pub fn exec(version: &str) {
             println!("fail to use {}", version)
         }
     }
+
+    Ok(())
 }

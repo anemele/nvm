@@ -1,19 +1,17 @@
 use crate::local::query_local;
 use crate::utils::get_path;
+use anyhow::anyhow;
 use colored::Colorize;
 
-pub fn exec() {
-    let Some((all, _, _)) = get_path() else {
-        return;
-    };
+pub fn exec() -> anyhow::Result<()> {
+    let (all, _, _) = get_path()?;
 
-    let Some(local_versions) = query_local(&all) else {
-        return;
-    };
+    let local_versions = query_local(&all).ok_or(anyhow!("failed to get local info"))?;
+    // dbg!(&local_versions);
 
     if local_versions.versions.len() == 0 {
         println!("no available. install first.");
-        return;
+        return Ok(());
     }
 
     // See issue: https://github.com/colored-rs/colored/issues/76#issuecomment-616869300
@@ -31,4 +29,6 @@ pub fn exec() {
             println!("  {}", v)
         }
     }
+
+    Ok(())
 }

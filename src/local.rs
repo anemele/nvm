@@ -1,14 +1,16 @@
+use crate::utils::get_path;
 use std::fs;
 use std::path::Path;
-use std::process::{Command, Stdio};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct LocalVersions {
     pub current: String,
     pub versions: Vec<String>,
 }
 
-fn is_node_path(path: &Path) -> bool {
+fn is_node_path(path: impl AsRef<Path>) -> bool {
+    let path = path.as_ref();
+
     // These "unwraps" are f**king code
     let start_with_v = path.file_name().unwrap().to_str().unwrap().starts_with("v");
 
@@ -20,26 +22,27 @@ fn is_node_path(path: &Path) -> bool {
     start_with_v && node_exist
 }
 
-pub fn query_local(all: &Path) -> Option<LocalVersions> {
+fn get_current_version() -> anyhow::Result<String> {
+    let (_, bin, _) = get_path()?;
+    let link = fs::read_link(bin)?;
+    let v = link
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .strip_prefix("v")
+        .unwrap();
+
+    Ok(v.to_string())
+}
+
+pub fn query_local(all: impl AsRef<Path>) -> Option<LocalVersions> {
+    let all = all.as_ref();
+
     let Ok(rd) = fs::read_dir(&all) else {
         eprintln!("fail to read path: {}", all.display());
         return None;
     };
-
-    let mut current = String::new();
-
-    if let Ok(output) = Command::new("node")
-        .arg("--version")
-        .stdout(Stdio::piped())
-        .output()
-    {
-        if let Some(v) = String::from_utf8_lossy(output.stdout.as_slice())
-            .trim_end()
-            .strip_prefix("v")
-        {
-            current = v.to_string()
-        }
-    }
 
     let mut versions = vec![];
     for r in rd {
@@ -53,5 +56,8 @@ pub fn query_local(all: &Path) -> Option<LocalVersions> {
         }
     }
 
-    Some(LocalVersions { current, versions })
+    Some(LocalVersions {
+        current: get_current_version().unwrap_or(String::new()),
+        versions,
+    })
 }
