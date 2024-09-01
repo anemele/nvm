@@ -7,7 +7,7 @@ use std::fs;
 pub fn exec(version: &str) -> anyhow::Result<()> {
     let (all, bin, _) = get_path()?;
 
-    let local_versions = query_local(&all).ok_or(anyhow!(""))?;
+    let local_versions = query_local(&all)?;
 
     let (map, _) = map_versions(local_versions.versions);
 
@@ -58,7 +58,7 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
         if status.is_ok_and(|s| s.success()) {
             println!("use {}", map_version)
         } else {
-            println!("fail to use {}", version)
+            return Err(anyhow!("fail to use {}", version));
         }
     }
 
@@ -73,7 +73,7 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
         if symlink(want, bin).is_ok() {
             println!("use {}", map_version)
         } else {
-            println!("fail to use {}", version)
+            return Err(anyhow!("fail to use {}", version));
         }
     }
 

@@ -60,7 +60,7 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
 
     let src = tmp.join(format!("{}.{}", dist.dir, dist.ext));
 
-    if !src.exists() && !download_dist(&dist.url, &src) {
+    if !src.exists() && download_dist(&dist.url, &src).is_err() {
         return Err(anyhow!("failed to download: {}", version));
     }
     // dbg!(&src);
@@ -84,7 +84,7 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
     if ok && fs::rename(all.join(dist.dir), dst).is_ok() {
         println!("installed: {}", map_version)
     } else {
-        println!("failed to install: {}", version)
+        return Err(anyhow!("failed to install: {}", version));
     }
 
     Ok(())

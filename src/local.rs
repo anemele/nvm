@@ -36,13 +36,10 @@ fn get_current_version() -> anyhow::Result<String> {
     Ok(v.to_string())
 }
 
-pub fn query_local(all: impl AsRef<Path>) -> Option<LocalVersions> {
+pub fn query_local(all: impl AsRef<Path>) -> anyhow::Result<LocalVersions> {
     let all = all.as_ref();
 
-    let Ok(rd) = fs::read_dir(&all) else {
-        eprintln!("fail to read path: {}", all.display());
-        return None;
-    };
+    let rd = fs::read_dir(&all)?;
 
     let mut versions = vec![];
     for r in rd {
@@ -56,8 +53,9 @@ pub fn query_local(all: impl AsRef<Path>) -> Option<LocalVersions> {
         }
     }
 
-    Some(LocalVersions {
+    let ret = LocalVersions {
         current: get_current_version().unwrap_or(String::new()),
         versions,
-    })
+    };
+    Ok(ret)
 }

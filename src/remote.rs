@@ -1,9 +1,9 @@
 use crate::semver::map_versions;
 use crate::semver::{VersionMap, VersionVec};
+use anyhow::anyhow;
 use serde::Deserialize;
 // use serde_json::Value;
-use std::fs::File;
-use std::io::Write;
+use std::fs;
 use std::path::Path;
 
 #[derive(Debug, Deserialize)]
@@ -48,24 +48,15 @@ pub fn get_map_versions() -> anyhow::Result<(VersionMap, VersionVec)> {
     Ok(map_versions(versions))
 }
 
-pub fn download_dist(url: &str, path: &Path) -> bool {
-    let Ok(res) = tinyget::get(url)
+pub fn download_dist(url: &str, path: &Path) -> anyhow::Result<()> {
+    let res = tinyget::get(url)
         .with_header("User-Agent", "NVM Client")
-        .send()
-    else {
-        return false;
-    };
+        .send()?;
 
     if res.status_code >= 300 {
-        return false;
+        return Err(anyhow!("Failed to download {}: {}", url, res.status_code));
     }
 
-    let Ok(mut file) = File::create(&path) else {
-        return false;
-    };
-    let Ok(size) = file.write(res.as_bytes()) else {
-        return false;
-    };
-
-    size > 0
+    fs::write(path, res.as_bytes())?;
+    Ok(())
 }
