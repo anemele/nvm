@@ -31,6 +31,7 @@ fn get_index() -> anyhow::Result<Indexes> {
     let url = get_node_url("index.json");
     let res = tinyget::get(url)
         .with_header("User-Agent", "NVM Client")
+        .with_timeout(10)
         .send()?;
 
     let i: Indexes = serde_json::from_slice(res.as_bytes())?;
@@ -51,6 +52,7 @@ pub fn get_map_versions() -> anyhow::Result<(VersionMap, VersionVec)> {
 pub fn download_dist(url: &str, path: &Path) -> anyhow::Result<()> {
     let res = tinyget::get(url)
         .with_header("User-Agent", "NVM Client")
+        .with_timeout(10)
         .send()?;
 
     if res.status_code >= 300 {

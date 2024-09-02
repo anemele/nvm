@@ -20,5 +20,4 @@ anyhow = "1.0.86"
 sevenz-rust = "0.5.4"
 
 [profile.release]
-lto = true
 opt-level = 'z'
