@@ -6,11 +6,11 @@ pub fn exec() -> anyhow::Result<()> {
     let (_, _, tmp) = get_path()?;
 
     if fs::remove_dir_all(&tmp).is_err() {
-        Err(anyhow!(
+        return Err(anyhow!(
             "failed to clean cache, do it manually. ({})",
             tmp.display()
-        ))
-    } else {
-        Ok(())
+        ));
     }
+
+    Ok(())
 }

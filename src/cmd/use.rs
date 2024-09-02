@@ -36,6 +36,19 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
             return Err(anyhow!("failed to remove link: {}", bin.display()));
         }
 
+        let Some(bin) = bin.to_str() else {
+            return Err(anyhow!(
+                "failed to convert path to string: {}",
+                bin.display()
+            ));
+        };
+        let Some(want) = want.to_str() else {
+            return Err(anyhow!(
+                "failed to convert path to string: {}",
+                want.display()
+            ));
+        };
+
         // This method requires run as admin
         // use std::os::windows::fs::symlink_dir;
         // if let Err(e) = symlink_dir(want, bin) {
@@ -51,8 +64,8 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
             .arg("/c")
             .arg("mklink")
             .arg("/j")
-            .arg(bin.to_str().unwrap())
-            .arg(want.to_str().unwrap())
+            .arg(bin)
+            .arg(want)
             .stdout(Stdio::null())
             .status();
         if status.is_ok_and(|s| s.success()) {
