@@ -12,5 +12,6 @@ pub fn exec() -> anyhow::Result<()> {
         ));
     }
 
+    println!("cache cleaned");
     Ok(())
 }

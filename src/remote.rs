@@ -1,10 +1,13 @@
 use crate::semver::map_versions;
 use crate::semver::{VersionMap, VersionVec};
-use anyhow::anyhow;
+use indicatif::{ProgressBar, ProgressStyle};
+use reqwest::blocking::Client;
+use reqwest::header::CONTENT_LENGTH;
 use serde::Deserialize;
+use std::io::Write;
 // use serde_json::Value;
-use std::fs;
 use std::path::Path;
+use std::{fs, time};
 
 #[derive(Debug, Deserialize)]
 pub struct Index {
@@ -29,12 +32,19 @@ fn get_node_url(path: &str) -> String {
 
 fn get_index() -> anyhow::Result<Indexes> {
     let url = get_node_url("index.json");
-    let res = tinyget::get(url)
-        .with_header("User-Agent", "NVM Client")
-        .with_timeout(10)
-        .send()?;
+    let spinner = ProgressBar::new_spinner();
+    spinner.enable_steady_tick(time::Duration::from_millis(100));
+    spinner.set_message("Fetching index.json");
 
-    let i: Indexes = serde_json::from_slice(res.as_bytes())?;
+    let i = Client::new()
+        .get(url)
+        .header("User-Agent", "NVM Client")
+        .timeout(time::Duration::from_secs(10))
+        .send()?
+        .json::<Indexes>()?;
+
+    spinner.finish_with_message("Read index.json, done.");
+
     Ok(i)
 }
 
@@ -49,16 +59,49 @@ pub fn get_map_versions() -> anyhow::Result<(VersionMap, VersionVec)> {
     Ok(map_versions(versions))
 }
 
-pub fn download_dist(url: &str, path: &Path) -> anyhow::Result<()> {
-    let res = tinyget::get(url)
-        .with_header("User-Agent", "NVM Client")
-        .with_timeout(10)
-        .send()?;
+static CHUNK_SIZE: u64 = 1024 * 1024;
 
-    if res.status_code >= 300 {
-        return Err(anyhow!("Failed to download {}: {}", url, res.status_code));
+pub fn download_dist(url: &str, path: &Path) -> anyhow::Result<()> {
+    let client = Client::new();
+
+    let res = client
+        .head(url)
+        .header("User-Agent", "NVM Client")
+        .timeout(time::Duration::from_secs(10))
+        .send()?;
+    let headers = res.headers();
+    let content_length = headers
+        .get(CONTENT_LENGTH)
+        .unwrap()
+        .to_str()?
+        .parse::<u64>()?;
+    let chunk_num = content_length / CHUNK_SIZE + 1;
+
+    let mut out_file = fs::File::create(path)?;
+
+    let pb = ProgressBar::new(content_length);
+    pb.set_style(
+        ProgressStyle::default_bar()
+        .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")?
+        .progress_chars("#>-"));
+    pb.enable_steady_tick(time::Duration::from_millis(100));
+
+    for i in 0..chunk_num {
+        let start = i * CHUNK_SIZE;
+        let end = (i + 1) * CHUNK_SIZE;
+        let range = format!("bytes={}-{}", start, end - 1);
+        let buf = client
+            .get(url)
+            .header("User-Agent", "NVM Client")
+            .header("Range", range)
+            .timeout(time::Duration::from_secs(10))
+            .send()?
+            .bytes()?;
+        out_file.write(&buf)?;
+        pb.inc(buf.len() as u64);
     }
 
-    fs::write(path, res.as_bytes())?;
+    pb.finish();
+
     Ok(())
 }

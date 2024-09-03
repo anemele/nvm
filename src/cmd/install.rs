@@ -1,8 +1,9 @@
 use crate::remote::{download_dist, get_map_versions};
 use crate::utils::get_path;
 use anyhow::anyhow;
+use indicatif::ProgressBar;
 use std::env::consts::{ARCH, OS};
-use std::fs;
+use std::{fs, time};
 
 struct Dist {
     dir: String,
@@ -66,6 +67,10 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
     // dbg!(&src);
     // dbg!(&all);
 
+    let spinner = ProgressBar::new_spinner();
+    spinner.enable_steady_tick(time::Duration::from_millis(100));
+    spinner.set_message("Extracting...");
+
     #[cfg(target_family = "unix")]
     let ok = {
         use std::process::Command;
@@ -81,11 +86,16 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
     #[cfg(target_family = "windows")]
     let ok = sevenz_rust::decompress_file(src, &all).is_ok();
 
-    if ok && fs::rename(all.join(dist.dir), dst).is_ok() {
-        println!("installed: {}", map_version)
-    } else {
+    if !ok {
+        return Err(anyhow!("failed to extract: {}", version));
+    }
+
+    spinner.finish_with_message("Extracted, all done!");
+
+    if fs::rename(all.join(dist.dir), dst).is_err() {
         return Err(anyhow!("failed to install: {}", version));
     }
 
+    println!("installed: {}", map_version);
     Ok(())
 }
