@@ -15,13 +15,12 @@ pub fn exec() -> anyhow::Result<()> {
     // and the solution: https://docs.rs/colored/1.9.3/x86_64-pc-windows-msvc/colored/control/fn.set_virtual_terminal.html
     #[cfg(target_family = "windows")]
     {
-        use colored::control::set_virtual_terminal;
-        set_virtual_terminal(true).unwrap();
+        colored::control::set_virtual_terminal(true).unwrap();
     }
 
     for v in local_versions.versions {
         if v == local_versions.current {
-            println!("* {}", v.green())
+            println!("{}", format!("* {}", v).green())
         } else {
             println!("  {}", v)
         }

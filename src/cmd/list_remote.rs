@@ -18,14 +18,13 @@ pub fn exec() -> anyhow::Result<()> {
 
     #[cfg(target_family = "windows")]
     {
-        use colored::control::set_virtual_terminal;
-        set_virtual_terminal(true).unwrap();
+        colored::control::set_virtual_terminal(true).unwrap();
     }
 
     for key in vec {
         let v = map[&key].to_string();
         if v == local_versions.current {
-            println!("* {:7}=>  {}", key.green(), v.green())
+            println!("{}", format!("* {:7}=>  {}", key, v).green())
         } else if local_versions_set.get(&v).is_some() {
             println!("  {:7}=>  {}", key.green(), v.green())
         } else {
