@@ -1,15 +1,11 @@
-use crate::local::query_local;
-use crate::semver::map_versions;
-use crate::utils::get_paths;
-use anyhow::anyhow;
 use std::fs;
 
 pub fn exec(version: &str) -> anyhow::Result<()> {
-    let paths = get_paths()?;
+    let paths = crate::utils::get_paths()?;
 
-    let local_versions = query_local(&paths.all)?;
+    let local_versions = crate::local::query_local(&paths.all)?;
 
-    let (map, _) = map_versions(local_versions.versions);
+    let (map, _) = crate::semver::map_versions(local_versions.versions);
 
     let map_version = match map.get(version) {
         Some(s) => s.to_string(),
@@ -33,20 +29,14 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
     #[cfg(target_family = "windows")]
     {
         if paths.bin.exists() && fs::remove_dir_all(&paths.bin).is_err() {
-            return Err(anyhow!("failed to remove link: {}", paths.bin.display()));
+            anyhow::bail!("failed to remove link: {}", paths.bin.display());
         }
 
         let Some(bin) = paths.bin.to_str() else {
-            return Err(anyhow!(
-                "failed to convert path to string: {}",
-                paths.bin.display()
-            ));
+            anyhow::bail!("failed to convert path to string: {}", paths.bin.display());
         };
         let Some(want) = want.to_str() else {
-            return Err(anyhow!(
-                "failed to convert path to string: {}",
-                want.display()
-            ));
+            anyhow::bail!("failed to convert path to string: {}", want.display());
         };
 
         // This method requires run as admin
@@ -71,14 +61,14 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
         if status.is_ok_and(|s| s.success()) {
             println!("use {}", map_version)
         } else {
-            return Err(anyhow!("fail to use {}", version));
+            anyhow::bail!("fail to use {}", version);
         }
     }
 
     #[cfg(target_family = "unix")]
     {
         if paths.bin.exists() && fs::remove_file(&paths.bin).is_err() {
-            return Err(anyhow!("failed to remove link: {}", paths.bin.display()));
+            anyhow::bail!("failed to remove link: {}", paths.bin.display());
         }
 
         use std::os::unix::fs::symlink;
@@ -86,7 +76,7 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
         if symlink(want, paths.bin).is_ok() {
             println!("use {}", map_version)
         } else {
-            return Err(anyhow!("fail to use {}", version));
+            anyhow::bail!("fail to use {}", version);
         }
     }
 

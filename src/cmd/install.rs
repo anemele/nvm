@@ -1,6 +1,3 @@
-use crate::remote::{download_dist, get_map_versions};
-use crate::utils::get_paths;
-use anyhow::anyhow;
 use indicatif::ProgressBar;
 use std::env::consts::{ARCH, OS};
 use std::{fs, time};
@@ -8,7 +5,6 @@ use std::{fs, time};
 struct Dist {
     dir: String,
     ext: String,
-    url: String,
 }
 
 fn get_dist(version: &str) -> Dist {
@@ -34,17 +30,15 @@ fn get_dist(version: &str) -> Dist {
         x => x,
     };
     let dir = format!("node-v{version}-{os}-{arch}");
-    let url = format!("https://nodejs.org/dist/v{version}/{dir}.{ext}");
     Dist {
         dir,
         ext: ext.to_string(),
-        url,
     }
 }
 
 pub fn exec(version: &str) -> anyhow::Result<()> {
-    let paths = get_paths()?;
-    let (map, _) = get_map_versions()?;
+    let paths = crate::utils::get_paths()?;
+    let (map, _) = crate::remote::get_map_versions()?;
 
     let map_version = match map.get(version) {
         Some(v) => v.to_string(),
@@ -59,12 +53,11 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
 
     let dist = get_dist(&map_version);
 
-    let src = paths.tmp.join(format!("{}.{}", dist.dir, dist.ext));
+    let file = format!("{}.{}", dist.dir, dist.ext);
+    let src = paths.tmp.join(&file);
 
     if !src.exists() {
-        if download_dist(&dist.url, &src).is_err() {
-            return Err(anyhow!("failed to download: {}", version));
-        }
+        crate::remote::download_dist(&map_version, &file, &src)?;
     }
     // dbg!(&src);
     // dbg!(&all);
@@ -89,13 +82,13 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
     let ok = sevenz_rust::decompress_file(src, &paths.all).is_ok();
 
     if !ok {
-        return Err(anyhow!("failed to extract: {}", version));
+        anyhow::bail!("failed to extract: {}", version);
     }
 
-    spinner.finish_with_message("Extracted, all done!");
+    spinner.finish_with_message("Extracted.");
 
     if fs::rename(paths.all.join(dist.dir), dst).is_err() {
-        return Err(anyhow!("failed to install: {}", version));
+        anyhow::bail!("failed to install: {}", version);
     }
     println!("installed: {}", map_version);
     Ok(())

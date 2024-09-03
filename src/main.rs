@@ -2,6 +2,7 @@ mod cli;
 mod cmd;
 mod consts;
 mod local;
+mod mirror;
 mod remote;
 mod semver;
 mod utils;

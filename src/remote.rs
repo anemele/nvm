@@ -1,9 +1,9 @@
-use crate::semver::map_versions;
 use crate::semver::{VersionMap, VersionVec};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use std::io::Write;
 // use serde_json::Value;
 use std::path::Path;
@@ -27,7 +27,7 @@ pub struct Index {
 pub type Indexes = Vec<Index>;
 
 fn get_node_url(path: &str) -> String {
-    format!("https://nodejs.org/dist/{}", path)
+    crate::mirror::get_mirror() + path
 }
 
 fn get_index() -> anyhow::Result<Indexes> {
@@ -43,7 +43,7 @@ fn get_index() -> anyhow::Result<Indexes> {
         .send()?
         .json::<Indexes>()?;
 
-    spinner.finish_with_message("Read index.json, done.");
+    spinner.finish_with_message("Read index.json.");
 
     Ok(i)
 }
@@ -56,16 +56,40 @@ pub fn get_map_versions() -> anyhow::Result<(VersionMap, VersionVec)> {
         .map(|index| index.version[1..].to_owned())
         .collect();
 
-    Ok(map_versions(versions))
+    Ok(crate::semver::map_versions(versions))
 }
 
 static CHUNK_SIZE: u64 = 1024 * 1024;
 
-pub fn download_dist(url: &str, path: &Path) -> anyhow::Result<()> {
+pub fn download_dist(version: &str, file: &str, output: &Path) -> anyhow::Result<()> {
     let client = Client::new();
 
+    let spinner = ProgressBar::new_spinner();
+    spinner.enable_steady_tick(time::Duration::from_millis(100));
+    spinner.set_message("Fetching Checksum ...");
+
+    let url = get_node_url(&format!("v{}/SHASUMS256.txt", version));
+    // dbg!(&url);
+    let sha256_txt = client
+        .get(url)
+        .header("User-Agent", "NVM Client")
+        .timeout(time::Duration::from_secs(10))
+        .send()?
+        .text()?;
+    // dbg!(&file);
+    // dbg!(&sha256_txt);
+    let Some(sha256_line) = sha256_txt.lines().find(|line| line.ends_with(file)) else {
+        anyhow::bail!("  not found SHASUMS256.txt for {}.", file);
+    };
+    let Some(sha256_expected) = sha256_line.split_whitespace().next() else {
+        anyhow::bail!("  not found checksum for {}.", file);
+    };
+    spinner.finish_and_clear();
+
+    spinner.set_message("Fetching Head Info ...");
+    let url = get_node_url(&format!("v{}/{}", version, file));
     let res = client
-        .head(url)
+        .head(&url)
         .header("User-Agent", "NVM Client")
         .timeout(time::Duration::from_secs(10))
         .send()?;
@@ -76,8 +100,10 @@ pub fn download_dist(url: &str, path: &Path) -> anyhow::Result<()> {
         .to_str()?
         .parse::<u64>()?;
     let chunk_num = content_length / CHUNK_SIZE + 1;
+    spinner.finish_and_clear();
 
-    let mut out_file = fs::File::create(path)?;
+    let mut out_file = fs::File::create(output)?;
+    let mut hasher = Sha256::new();
 
     let pb = ProgressBar::new(content_length);
     pb.set_style(
@@ -91,17 +117,25 @@ pub fn download_dist(url: &str, path: &Path) -> anyhow::Result<()> {
         let end = (i + 1) * CHUNK_SIZE;
         let range = format!("bytes={}-{}", start, end - 1);
         let buf = client
-            .get(url)
+            .get(&url)
             .header("User-Agent", "NVM Client")
             .header("Range", range)
             .timeout(time::Duration::from_secs(10))
             .send()?
             .bytes()?;
         out_file.write(&buf)?;
+        hasher.update(&buf);
         pb.inc(buf.len() as u64);
     }
 
-    pb.finish();
+    pb.finish_and_clear();
+
+    let sha256_actual = format!("{:x}", hasher.finalize());
+    if sha256_expected == sha256_actual {
+        println!("  Checksum verified.");
+    } else {
+        anyhow::bail!("  Checksum mismatched.");
+    }
 
     Ok(())
 }

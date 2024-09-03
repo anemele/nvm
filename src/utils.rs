@@ -1,5 +1,4 @@
 use crate::consts::{NODE_ALL, NODE_BIN, NODE_HOME, NODE_TMP};
-use anyhow::anyhow;
 use std::fs;
 use std::path::PathBuf;
 // use serde_json::Value;
@@ -23,7 +22,7 @@ fn get_node_home() -> anyhow::Result<PathBuf> {
     if let Ok(Some(home)) = homedir::get_my_home() {
         Ok(home.join(NODE_HOME))
     } else {
-        Err(anyhow!("failed to get NODE_HOME: ~/{}", NODE_HOME))
+        anyhow::bail!("failed to get NODE_HOME: ~/{}", NODE_HOME)
     }
 }
 
@@ -44,7 +43,7 @@ pub fn get_paths() -> anyhow::Result<NodePaths> {
             continue;
         }
         if fs::create_dir(path).is_err() {
-            return Err(anyhow!("failed to create dir: {}", path.display()));
+            anyhow::bail!("failed to create dir: {}", path.display());
         }
     }
 
