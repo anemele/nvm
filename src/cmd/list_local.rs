@@ -1,11 +1,11 @@
 use crate::local::query_local;
-use crate::utils::get_path;
+use crate::utils::get_paths;
 use colored::Colorize;
 
 pub fn exec() -> anyhow::Result<()> {
-    let (all, _, _) = get_path()?;
+    let paths = get_paths()?;
 
-    let local_versions = query_local(&all)?;
+    let local_versions = query_local(&paths.all)?;
     // dbg!(&local_versions);
 
     if local_versions.versions.len() == 0 {

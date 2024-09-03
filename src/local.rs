@@ -1,6 +1,6 @@
 use anyhow::anyhow;
 
-use crate::utils::get_path;
+use crate::utils::get_paths;
 use std::fs;
 use std::path::Path;
 
@@ -33,8 +33,8 @@ fn is_node_path(path: impl AsRef<Path>) -> bool {
 }
 
 fn get_current_version() -> anyhow::Result<String> {
-    let (_, bin, _) = get_path()?;
-    let link = fs::read_link(bin)?;
+    let paths = get_paths()?;
+    let link = fs::read_link(paths.bin)?;
     let Some(name) = get_file_name(link) else {
         return Err(anyhow!("failed to get current version"));
     };

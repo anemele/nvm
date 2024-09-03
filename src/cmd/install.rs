@@ -1,5 +1,5 @@
 use crate::remote::{download_dist, get_map_versions};
-use crate::utils::get_path;
+use crate::utils::get_paths;
 use anyhow::anyhow;
 use indicatif::ProgressBar;
 use std::env::consts::{ARCH, OS};
@@ -43,7 +43,7 @@ fn get_dist(version: &str) -> Dist {
 }
 
 pub fn exec(version: &str) -> anyhow::Result<()> {
-    let (all, _, tmp) = get_path()?;
+    let paths = get_paths()?;
     let (map, _) = get_map_versions()?;
 
     let map_version = match map.get(version) {
@@ -51,7 +51,7 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
         None => version.to_string(),
     };
 
-    let dst = all.join(format!("v{}", map_version));
+    let dst = paths.all.join(format!("v{}", map_version));
     if dst.exists() {
         println!("exists: {}", dst.display());
         return Ok(());
@@ -59,10 +59,12 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
 
     let dist = get_dist(&map_version);
 
-    let src = tmp.join(format!("{}.{}", dist.dir, dist.ext));
+    let src = paths.tmp.join(format!("{}.{}", dist.dir, dist.ext));
 
-    if !src.exists() && download_dist(&dist.url, &src).is_err() {
-        return Err(anyhow!("failed to download: {}", version));
+    if !src.exists() {
+        if download_dist(&dist.url, &src).is_err() {
+            return Err(anyhow!("failed to download: {}", version));
+        }
     }
     // dbg!(&src);
     // dbg!(&all);
@@ -78,13 +80,13 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
             .arg("-xf")
             .arg(src)
             .arg("-C")
-            .arg(&all)
+            .arg(&paths.all)
             .status()
             .is_ok_and(|s| s.success())
     };
 
     #[cfg(target_family = "windows")]
-    let ok = sevenz_rust::decompress_file(src, &all).is_ok();
+    let ok = sevenz_rust::decompress_file(src, &paths.all).is_ok();
 
     if !ok {
         return Err(anyhow!("failed to extract: {}", version));
@@ -92,10 +94,9 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
 
     spinner.finish_with_message("Extracted, all done!");
 
-    if fs::rename(all.join(dist.dir), dst).is_err() {
+    if fs::rename(paths.all.join(dist.dir), dst).is_err() {
         return Err(anyhow!("failed to install: {}", version));
     }
-
     println!("installed: {}", map_version);
     Ok(())
 }

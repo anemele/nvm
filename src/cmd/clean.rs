@@ -1,14 +1,14 @@
-use crate::utils::get_path;
+use crate::utils::get_paths;
 use anyhow::anyhow;
 use std::fs;
 
 pub fn exec() -> anyhow::Result<()> {
-    let (_, _, tmp) = get_path()?;
+    let paths = get_paths()?;
 
-    if fs::remove_dir_all(&tmp).is_err() {
+    if fs::remove_dir_all(&paths.tmp).is_err() {
         return Err(anyhow!(
             "failed to clean cache, do it manually. ({})",
-            tmp.display()
+            paths.tmp.display()
         ));
     }
 

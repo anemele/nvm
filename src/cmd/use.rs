@@ -1,13 +1,13 @@
 use crate::local::query_local;
 use crate::semver::map_versions;
-use crate::utils::get_path;
+use crate::utils::get_paths;
 use anyhow::anyhow;
 use std::fs;
 
 pub fn exec(version: &str) -> anyhow::Result<()> {
-    let (all, bin, _) = get_path()?;
+    let paths = get_paths()?;
 
-    let local_versions = query_local(&all)?;
+    let local_versions = query_local(&paths.all)?;
 
     let (map, _) = map_versions(local_versions.versions);
 
@@ -21,7 +21,7 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let want = all.join(format!("v{}", map_version));
+    let want = paths.all.join(format!("v{}", map_version));
     #[cfg(target_family = "unix")]
     let want = want.join("bin");
 
@@ -32,14 +32,14 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
 
     #[cfg(target_family = "windows")]
     {
-        if bin.exists() && fs::remove_dir(&bin).is_err() {
-            return Err(anyhow!("failed to remove link: {}", bin.display()));
+        if paths.bin.exists() && fs::remove_dir_all(&paths.bin).is_err() {
+            return Err(anyhow!("failed to remove link: {}", paths.bin.display()));
         }
 
-        let Some(bin) = bin.to_str() else {
+        let Some(bin) = paths.bin.to_str() else {
             return Err(anyhow!(
                 "failed to convert path to string: {}",
-                bin.display()
+                paths.bin.display()
             ));
         };
         let Some(want) = want.to_str() else {
@@ -77,13 +77,13 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
 
     #[cfg(target_family = "unix")]
     {
-        if bin.exists() && fs::remove_file(&bin).is_err() {
-            return Err(anyhow!("failed to remove link: {}", bin.display()));
+        if paths.bin.exists() && fs::remove_file(&paths.bin).is_err() {
+            return Err(anyhow!("failed to remove link: {}", paths.bin.display()));
         }
 
         use std::os::unix::fs::symlink;
 
-        if symlink(want, bin).is_ok() {
+        if symlink(want, paths.bin).is_ok() {
             println!("use {}", map_version)
         } else {
             return Err(anyhow!("fail to use {}", version));

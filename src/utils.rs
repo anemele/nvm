@@ -27,7 +27,14 @@ fn get_node_home() -> anyhow::Result<PathBuf> {
     }
 }
 
-pub fn get_path() -> anyhow::Result<(PathBuf, PathBuf, PathBuf)> {
+#[derive(Debug)]
+pub struct NodePaths {
+    pub all: PathBuf,
+    pub bin: PathBuf,
+    pub tmp: PathBuf,
+}
+
+pub fn get_paths() -> anyhow::Result<NodePaths> {
     let home = get_node_home()?;
     let all = home.join(NODE_ALL);
     let tmp = home.join(NODE_TMP);
@@ -43,5 +50,6 @@ pub fn get_path() -> anyhow::Result<(PathBuf, PathBuf, PathBuf)> {
 
     let bin = home.join(NODE_BIN);
 
-    Ok((all, bin, tmp))
+    let paths = NodePaths { all, bin, tmp };
+    Ok(paths)
 }
