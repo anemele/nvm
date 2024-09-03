@@ -99,7 +99,6 @@ pub fn download_dist(version: &str, file: &str, output: &Path) -> anyhow::Result
         .unwrap()
         .to_str()?
         .parse::<u64>()?;
-    let chunk_num = content_length / CHUNK_SIZE + 1;
     spinner.finish_and_clear();
 
     let mut out_file = fs::File::create(output)?;
@@ -112,10 +111,10 @@ pub fn download_dist(version: &str, file: &str, output: &Path) -> anyhow::Result
         .progress_chars("#>-"));
     pb.enable_steady_tick(time::Duration::from_millis(100));
 
-    for i in 0..chunk_num {
-        let start = i * CHUNK_SIZE;
-        let end = (i + 1) * CHUNK_SIZE;
-        let range = format!("bytes={}-{}", start, end - 1);
+    let mut start = 0;
+    while start < content_length {
+        let end = start + CHUNK_SIZE;
+        let range = format!("bytes={}-{}", start, end);
         let buf = client
             .get(&url)
             .header("User-Agent", "NVM Client")
@@ -126,6 +125,7 @@ pub fn download_dist(version: &str, file: &str, output: &Path) -> anyhow::Result
         out_file.write(&buf)?;
         hasher.update(&buf);
         pb.inc(buf.len() as u64);
+        start = end + 1;
     }
 
     pb.finish_and_clear();
