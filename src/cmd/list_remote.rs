@@ -24,11 +24,11 @@ pub fn exec() -> anyhow::Result<()> {
     for key in vec {
         let v = map[&key].to_string();
         if v == local_versions.current {
-            println!("{}", format!("* {:7}=>  {}", key, v).green())
+            println!("{}", format!("* {:7} =>  {}", key, v).green())
         } else if local_versions_set.get(&v).is_some() {
-            println!("  {:7}=>  {}", key.green(), v.green())
+            println!("{}", format!("  {:7} =>  {}", key, v).green())
         } else {
-            println!("  {:7}=>  {}", key, v)
+            println!("  {:7} =>  {}", key, v)
         }
     }
 
