@@ -1,12 +1,10 @@
-use crate::remote::{download_dist, get_map_versions};
-use crate::utils::get_path;
+use indicatif::ProgressBar;
 use std::env::consts::{ARCH, OS};
-use std::fs;
+use std::{fs, time};
 
 struct Dist {
     dir: String,
     ext: String,
-    url: String,
 }
 
 fn get_dist(version: &str) -> Dist {
@@ -32,43 +30,42 @@ fn get_dist(version: &str) -> Dist {
         x => x,
     };
     let dir = format!("node-v{version}-{os}-{arch}");
-    let url = format!("https://nodejs.org/dist/v{version}/{dir}.{ext}");
     Dist {
         dir,
         ext: ext.to_string(),
-        url,
     }
 }
 
-pub fn exec(version: &str) {
-    let Some((all, _, tmp)) = get_path() else {
-        return;
-    };
-
-    let Some((map, _)) = get_map_versions() else {
-        return;
-    };
+pub fn exec(version: &str) -> anyhow::Result<()> {
+    let paths = crate::utils::get_paths()?;
+    let (map, _) = crate::remote::get_map_versions()?;
 
     let map_version = match map.get(version) {
         Some(v) => v.to_string(),
         None => version.to_string(),
     };
 
-    let dst = all.join(format!("v{}", map_version));
+    let dst = paths.all.join(format!("v{}", map_version));
     if dst.exists() {
         println!("exists: {}", dst.display());
-        return;
+        return Ok(());
     }
 
     let dist = get_dist(&map_version);
 
-    let src = tmp.join(format!("{}.{}", dist.dir, dist.ext));
+    let file = format!("{}.{}", dist.dir, dist.ext);
+    let src = paths.tmp.join(&file);
 
-    if !src.exists() && !download_dist(&dist.url, &src) {
-        eprintln!("failed to download: {}", version);
-        return;
+    if !src.exists() {
+        crate::remote::download_dist(&map_version, &file, &src)?;
     }
-    println!("{}==>{}", src.display(), all.display());
+    // dbg!(&src);
+    // dbg!(&all);
+
+    let spinner = ProgressBar::new_spinner();
+    spinner.enable_steady_tick(time::Duration::from_millis(100));
+    spinner.set_message("Extracting...");
+
     #[cfg(target_family = "unix")]
     let ok = {
         use std::process::Command;
@@ -76,17 +73,23 @@ pub fn exec(version: &str) {
             .arg("-xf")
             .arg(src)
             .arg("-C")
-            .arg(&all)
+            .arg(&paths.all)
             .status()
             .is_ok_and(|s| s.success())
     };
 
     #[cfg(target_family = "windows")]
-    let ok = sevenz_rust::decompress_file(src, &all).is_ok();
+    let ok = sevenz_rust::decompress_file(src, &paths.all).is_ok();
 
-    if ok && fs::rename(all.join(dist.dir), dst).is_ok() {
-        println!("installed: {}", map_version)
-    } else {
-        println!("failed to install: {}", version)
+    if !ok {
+        anyhow::bail!("failed to extract: {}", version);
     }
+
+    spinner.finish_with_message("Extracted.");
+
+    if fs::rename(paths.all.join(dist.dir), dst).is_err() {
+        anyhow::bail!("failed to install: {}", version);
+    }
+    println!("installed: {}", map_version);
+    Ok(())
 }

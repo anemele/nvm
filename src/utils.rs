@@ -2,7 +2,6 @@ use crate::consts::{NODE_ALL, NODE_BIN, NODE_HOME, NODE_TMP};
 use std::fs;
 use std::path::PathBuf;
 // use serde_json::Value;
-use homedir::get_my_home;
 
 // pub fn is_lts(lts: Value) -> bool {
 //     match lts {
@@ -19,21 +18,23 @@ use homedir::get_my_home;
 //     assert!(is_lts(Value::String("Iron".to_string())));
 // }
 
-fn get_node_home() -> Option<PathBuf> {
-    let Ok(home) = get_my_home() else {
-        return None;
-    };
-    let Some(home) = home else {
-        return None;
-    };
-    Some(home.join(NODE_HOME))
+fn get_node_home() -> anyhow::Result<PathBuf> {
+    if let Ok(Some(home)) = homedir::get_my_home() {
+        Ok(home.join(NODE_HOME))
+    } else {
+        anyhow::bail!("failed to get NODE_HOME: ~/{}", NODE_HOME)
+    }
 }
 
-pub fn get_path() -> Option<(PathBuf, PathBuf, PathBuf)> {
-    let Some(home) = get_node_home() else {
-        eprintln!("failed to get NODE_HOME: ~/{}", NODE_HOME);
-        return None;
-    };
+#[derive(Debug)]
+pub struct NodePaths {
+    pub all: PathBuf,
+    pub bin: PathBuf,
+    pub tmp: PathBuf,
+}
+
+pub fn get_paths() -> anyhow::Result<NodePaths> {
+    let home = get_node_home()?;
     let all = home.join(NODE_ALL);
     let tmp = home.join(NODE_TMP);
 
@@ -42,12 +43,12 @@ pub fn get_path() -> Option<(PathBuf, PathBuf, PathBuf)> {
             continue;
         }
         if fs::create_dir(path).is_err() {
-            eprintln!("failed to create dir: {}", path.display());
-            return None;
+            anyhow::bail!("failed to create dir: {}", path.display());
         }
     }
 
     let bin = home.join(NODE_BIN);
 
-    Some((all, bin, tmp))
+    let paths = NodePaths { all, bin, tmp };
+    Ok(paths)
 }

@@ -1,77 +1,141 @@
-use crate::semver::map_versions;
 use crate::semver::{VersionMap, VersionVec};
+use indicatif::{ProgressBar, ProgressStyle};
+use reqwest::blocking::Client;
+use reqwest::header::CONTENT_LENGTH;
 use serde::Deserialize;
-use serde_json::Value;
-use std::fs::File;
+use sha2::{Digest, Sha256};
 use std::io::Write;
+// use serde_json::Value;
 use std::path::Path;
+use std::{fs, time};
 
 #[derive(Debug, Deserialize)]
 pub struct Index {
     pub version: String,
-    pub date: String,
-    pub files: Vec<String>,
-    pub npm: Option<String>,
-    pub v8: String,
-    pub uv: Option<String>,
-    pub zlib: Option<String>,
-    pub openssl: Option<String>,
-    pub modules: Option<String>,
-    pub lts: Value,
-    pub security: bool,
+    // pub date: String,
+    // pub files: Vec<String>,
+    // pub npm: Option<String>,
+    // pub v8: String,
+    // pub uv: Option<String>,
+    // pub zlib: Option<String>,
+    // pub openssl: Option<String>,
+    // pub modules: Option<String>,
+    // pub lts: Value,
+    // pub security: bool,
 }
 
 pub type Indexes = Vec<Index>;
 
 fn get_node_url(path: &str) -> String {
-    format!("https://nodejs.org/dist/{}", path)
+    crate::mirror::get_mirror() + path
 }
 
-fn get_index() -> Option<Indexes> {
+fn get_index() -> anyhow::Result<Indexes> {
     let url = get_node_url("index.json");
-    let Ok(res) = tinyget::get(url)
-        .with_header("User-Agent", "NVM Client")
-        .send()
-    else {
-        return None;
-    };
-    let Ok(i) = serde_json::from_slice::<Indexes>(res.as_bytes()) else {
-        return None;
-    };
-    Some(i)
+    let spinner = ProgressBar::new_spinner();
+    spinner.enable_steady_tick(time::Duration::from_millis(100));
+    spinner.set_message("Fetching index.json");
+
+    let i = Client::new()
+        .get(url)
+        .header("User-Agent", "NVM Client")
+        .timeout(time::Duration::from_secs(10))
+        .send()?
+        .json::<Indexes>()?;
+
+    spinner.finish_with_message("Read index.json.");
+
+    Ok(i)
 }
 
-pub fn get_map_versions() -> Option<(VersionMap, VersionVec)> {
-    let Some(indexes) = get_index() else {
-        return None;
-    };
+pub fn get_map_versions() -> anyhow::Result<(VersionMap, VersionVec)> {
+    let indexes = get_index()?;
 
-    let mut versions = vec![];
-    for index in indexes {
-        versions.push(index.version[1..].to_owned())
-    }
+    let versions: Vec<String> = indexes
+        .iter()
+        .map(|index| index.version[1..].to_owned())
+        .collect();
 
-    Some(map_versions(versions))
+    Ok(crate::semver::map_versions(versions))
 }
 
-pub fn download_dist(url: &str, path: &Path) -> bool {
-    let Ok(res) = tinyget::get(url)
-        .with_header("User-Agent", "NVM Client")
-        .send()
-    else {
-        return false;
-    };
+static CHUNK_SIZE: u64 = 1024 * 1024;
 
-    if res.status_code >= 300 {
-        return false;
+pub fn download_dist(version: &str, file: &str, output: &Path) -> anyhow::Result<()> {
+    let client = Client::new();
+
+    let spinner = ProgressBar::new_spinner();
+    spinner.enable_steady_tick(time::Duration::from_millis(100));
+    spinner.set_message("Fetching Checksum ...");
+
+    let url = get_node_url(&format!("v{}/SHASUMS256.txt", version));
+    // dbg!(&url);
+    let sha256_txt = client
+        .get(url)
+        .header("User-Agent", "NVM Client")
+        .timeout(time::Duration::from_secs(10))
+        .send()?
+        .text()?;
+    // dbg!(&file);
+    // dbg!(&sha256_txt);
+    let Some(sha256_line) = sha256_txt.lines().find(|line| line.ends_with(file)) else {
+        anyhow::bail!("  not found SHASUMS256.txt for {}.", file);
+    };
+    let Some(sha256_expected) = sha256_line.split_whitespace().next() else {
+        anyhow::bail!("  not found checksum for {}.", file);
+    };
+    spinner.finish_and_clear();
+
+    spinner.set_message("Fetching Head Info ...");
+    let url = get_node_url(&format!("v{}/{}", version, file));
+    let res = client
+        .head(&url)
+        .header("User-Agent", "NVM Client")
+        .timeout(time::Duration::from_secs(10))
+        .send()?;
+    let headers = res.headers();
+    let content_length = headers
+        .get(CONTENT_LENGTH)
+        .unwrap()
+        .to_str()?
+        .parse::<u64>()?;
+    spinner.finish_and_clear();
+
+    let mut out_file = fs::File::create(output)?;
+    let mut hasher = Sha256::new();
+
+    let pb = ProgressBar::new(content_length);
+    pb.set_style(
+        ProgressStyle::default_bar()
+        .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")?
+        .progress_chars("#>-"));
+    pb.enable_steady_tick(time::Duration::from_millis(100));
+
+    let mut start = 0;
+    while start < content_length {
+        let end = start + CHUNK_SIZE;
+        let range = format!("bytes={}-{}", start, end);
+        let buf = client
+            .get(&url)
+            .header("User-Agent", "NVM Client")
+            .header("Range", range)
+            .timeout(time::Duration::from_secs(10))
+            .send()?
+            .bytes()?;
+        out_file.write(&buf)?;
+        hasher.update(&buf);
+        pb.inc(buf.len() as u64);
+        start = end + 1;
     }
 
-    let Ok(mut file) = File::create(&path) else {
-        return false;
-    };
-    let Ok(size) = file.write(res.as_bytes()) else {
-        return false;
-    };
+    pb.finish_and_clear();
 
-    size > 0
+    let sha256_actual = format!("{:x}", hasher.finalize());
+    if sha256_expected == sha256_actual {
+        println!("  Checksum verified.");
+    } else {
+        anyhow::bail!("  Checksum mismatched.");
+    }
+
+    Ok(())
 }

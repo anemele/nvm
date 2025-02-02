@@ -1,16 +1,25 @@
 use std::fs;
 use std::path::Path;
-use std::process::{Command, Stdio};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct LocalVersions {
     pub current: String,
     pub versions: Vec<String>,
 }
 
-fn is_node_path(path: &Path) -> bool {
+fn get_file_name(path: impl AsRef<Path>) -> Option<String> {
+    let name = path.as_ref().file_name()?.to_str()?;
+    Some(name.to_string())
+}
+
+fn is_node_path(path: impl AsRef<Path>) -> bool {
+    let path = path.as_ref();
+
     // These "unwraps" are f**king code
-    let start_with_v = path.file_name().unwrap().to_str().unwrap().starts_with("v");
+    let Some(name) = get_file_name(path) else {
+        return false;
+    };
+    let start_with_v = name.starts_with("v");
 
     #[cfg(target_family = "windows")]
     let node_exist = path.join("node.exe").is_file();
@@ -20,26 +29,21 @@ fn is_node_path(path: &Path) -> bool {
     start_with_v && node_exist
 }
 
-pub fn query_local(all: &Path) -> Option<LocalVersions> {
-    let Ok(rd) = fs::read_dir(&all) else {
-        eprintln!("fail to read path: {}", all.display());
-        return None;
+fn get_current_version() -> anyhow::Result<String> {
+    let paths = crate::utils::get_paths()?;
+    let link = fs::read_link(paths.bin)?;
+    let Some(name) = get_file_name(link) else {
+        anyhow::bail!("failed to get current version");
     };
+    let v = name.trim_start_matches("v");
 
-    let mut current = String::new();
+    Ok(v.to_string())
+}
 
-    if let Ok(output) = Command::new("node")
-        .arg("--version")
-        .stdout(Stdio::piped())
-        .output()
-    {
-        if let Some(v) = String::from_utf8_lossy(output.stdout.as_slice())
-            .trim_end()
-            .strip_prefix("v")
-        {
-            current = v.to_string()
-        }
-    }
+pub fn query_local(all: impl AsRef<Path>) -> anyhow::Result<LocalVersions> {
+    let all = all.as_ref();
+
+    let rd = fs::read_dir(&all)?;
 
     let mut versions = vec![];
     for r in rd {
@@ -48,10 +52,16 @@ pub fn query_local(all: &Path) -> Option<LocalVersions> {
         };
         let dir = de.path();
         if is_node_path(&dir) {
-            let name = dir.file_name().unwrap().to_str().unwrap();
+            let Some(name) = get_file_name(dir) else {
+                continue;
+            };
             versions.push(name[1..].to_string())
         }
     }
 
-    Some(LocalVersions { current, versions })
+    let ret = LocalVersions {
+        current: get_current_version().unwrap_or(String::new()),
+        versions,
+    };
+    Ok(ret)
 }
