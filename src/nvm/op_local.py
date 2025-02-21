@@ -1,33 +1,43 @@
+import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional
 
-from .consts import NODE_ALL
+from .config import load_config
 
 
 @dataclass
 class LocalInfo:
-    current: str
     versions: list[str] = field(default_factory=list)
+    current: Optional[str] = None
 
 
-def _is_node_path(path: Path) -> bool:
-    start_with_v = path.name.startswith("v")
-    node_exist = (path / "node.exe").exists()
-    return start_with_v and node_exist
+def _get_node_vers(path: Path) -> Iterable[str]:
+    for p in path.iterdir():
+        if not p.is_dir():
+            continue
+        m = re.match(r"node-v(\d+\.\d+\.\d+)", p.name)
+        if m is not None:
+            yield m.group(1)
 
 
-def query_local_info() -> Optional[LocalInfo]:
-    if not NODE_ALL.exists():
-        return None
+def query_local_info() -> LocalInfo:
+    config = load_config()
+    node_all = config.root / config.nvm_all
 
-    stdout = subprocess.run("node --version", capture_output=True).stdout
-    stdout = stdout.decode()
-    current = stdout.strip().removeprefix("v")
+    versions = list(_get_node_vers(node_all))
 
-    versions = [
-        p.name.removeprefix("v") for p in NODE_ALL.iterdir() if _is_node_path(p)
-    ]
+    cmd = ["node", "--version"]
+    try:
+        stdout = subprocess.run(cmd, capture_output=True).stdout
+    except FileNotFoundError:
+        return LocalInfo(versions=versions)
 
-    return LocalInfo(current=current, versions=versions)
+    stdout = stdout.decode().strip()
+    s = re.search(r"node-v(\d+\.\d+\.\d+)", stdout)
+    if s:
+        current = s.group(1)
+    else:
+        current = None
+    return LocalInfo(versions=versions, current=current)
