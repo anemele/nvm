@@ -2,7 +2,7 @@
 
 import click
 
-from .cmd import cmd_list
+from .cmd import cmd_list, cmd_list_remote
 
 
 class OrderedGroup(click.Group):
@@ -22,7 +22,7 @@ def cli_list():
 @cli.command(name="lr")
 def cli_list_remote():
     """list remote versions"""
-    click.echo("List of remote commands")
+    cmd_list_remote()
 
 
 @cli.command(name="use")
