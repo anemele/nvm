@@ -8,10 +8,11 @@ pub enum Cli {
     List,
 
     /// List remote, by default only lts
-    #[clap(alias = "lr")]
+    #[clap(aliases = ["lr", "lsr"])]
     ListRemote,
 
     /// Use some version
+    #[clap(aliases =["set"])]
     Use { version: String },
 
     /// Install some version
