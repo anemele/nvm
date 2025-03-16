@@ -9,14 +9,17 @@ mod utils;
 
 use clap::Parser;
 use cli::Cli;
+use cli::Cli::*;
+
+use cmd::*;
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse() {
-        Cli::List => cmd::list_local::exec(),
-        Cli::ListRemote => cmd::list_remote::exec(),
-        Cli::Use { version } => cmd::r#use::exec(&version),
-        Cli::Install { version } => cmd::install::exec(&version),
-        Cli::Uninstall { version } => cmd::uninstall::exec(&version),
-        Cli::Clean => cmd::clean::exec(),
+        List => cmd_list_local::exec(),
+        ListRemote => cmd_list_remote::exec(),
+        Use { version } => cmd_use::exec(&version),
+        Install { version } => cmd_install::exec(&version),
+        Uninstall { version } => cmd_uninstall::exec(&version),
+        Clean => cmd_clean::exec(),
     }
 }

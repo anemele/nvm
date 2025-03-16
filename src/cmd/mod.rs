@@ -1,6 +1,6 @@
-pub mod clean;
-pub mod install;
-pub mod list_local;
-pub mod list_remote;
-pub mod uninstall;
-pub mod r#use;
+pub mod cmd_clean;
+pub mod cmd_install;
+pub mod cmd_list_local;
+pub mod cmd_list_remote;
+pub mod cmd_uninstall;
+pub mod cmd_use;
