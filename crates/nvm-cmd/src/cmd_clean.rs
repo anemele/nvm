@@ -1,7 +1,9 @@
 use std::fs;
 
+use nvm_core::utils;
+
 pub fn exec() -> anyhow::Result<()> {
-    let paths = crate::utils::get_paths()?;
+    let paths = utils::get_paths()?;
 
     if fs::remove_dir_all(&paths.tmp).is_err() {
         anyhow::bail!(

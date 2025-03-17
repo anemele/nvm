@@ -1,17 +1,9 @@
-mod cli;
-mod cmd;
-mod consts;
-mod local;
-mod mirror;
-mod remote;
-mod semver;
-mod utils;
-
 use clap::Parser;
+mod cli;
 use cli::Cli;
 use cli::Cli::*;
 
-use cmd::*;
+use nvm_cmd::*;
 
 fn main() -> anyhow::Result<()> {
     match Cli::parse() {

@@ -1,9 +1,11 @@
 use colored::Colorize;
+use nvm_core::local::query_local;
+use nvm_core::utils::get_paths;
 
 pub fn exec() -> anyhow::Result<()> {
-    let paths = crate::utils::get_paths()?;
+    let paths = get_paths()?;
 
-    let local_versions = crate::local::query_local(&paths.all)?;
+    let local_versions = query_local(&paths.all)?;
     // dbg!(&local_versions);
 
     if local_versions.versions.len() == 0 {

@@ -1,12 +1,15 @@
-use crate::local::LocalVersions;
 use colored::Colorize;
+use nvm_core::local::LocalVersions;
+use nvm_core::local::query_local;
+use nvm_core::remote::get_map_versions;
+use nvm_core::utils::get_paths;
 use std::collections::HashSet;
 
 pub fn exec() -> anyhow::Result<()> {
-    let (map, vec) = crate::remote::get_map_versions()?;
+    let (map, vec) = get_map_versions()?;
 
-    let local_versions = if let Ok(paths) = crate::utils::get_paths() {
-        crate::local::query_local(&paths.all).unwrap_or_default()
+    let local_versions = if let Ok(paths) = get_paths() {
+        query_local(&paths.all).unwrap_or_default()
     } else {
         LocalVersions::default()
     };

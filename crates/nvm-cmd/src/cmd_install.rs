@@ -1,4 +1,7 @@
 use indicatif::ProgressBar;
+use nvm_core::remote::download_dist;
+use nvm_core::remote::get_map_versions;
+use nvm_core::utils::get_paths;
 use std::env::consts::{ARCH, OS};
 use std::{fs, time};
 
@@ -37,8 +40,8 @@ fn get_dist(version: &str) -> Dist {
 }
 
 pub fn exec(version: &str) -> anyhow::Result<()> {
-    let paths = crate::utils::get_paths()?;
-    let (map, _) = crate::remote::get_map_versions()?;
+    let paths = get_paths()?;
+    let (map, _) = get_map_versions()?;
 
     let map_version = match map.get(version) {
         Some(v) => v.to_string(),
@@ -57,7 +60,7 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
     let src = paths.tmp.join(&file);
 
     if !src.exists() {
-        crate::remote::download_dist(&map_version, &file, &src)?;
+        download_dist(&map_version, &file, &src)?;
     }
     // dbg!(&src);
     // dbg!(&all);

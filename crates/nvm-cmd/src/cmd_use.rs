@@ -1,11 +1,14 @@
+use nvm_core::local::query_local;
+use nvm_core::semver::map_versions;
+use nvm_core::utils::get_paths;
 use std::fs;
 
 pub fn exec(version: &str) -> anyhow::Result<()> {
-    let paths = crate::utils::get_paths()?;
+    let paths = get_paths()?;
 
-    let local_versions = crate::local::query_local(&paths.all)?;
+    let local_versions = query_local(&paths.all)?;
 
-    let (map, _) = crate::semver::map_versions(local_versions.versions);
+    let (map, _) = map_versions(local_versions.versions);
 
     let map_version = match map.get(version) {
         Some(s) => s.to_string(),
