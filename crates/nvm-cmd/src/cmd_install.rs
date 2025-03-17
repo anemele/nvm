@@ -1,98 +1,48 @@
-use indicatif::ProgressBar;
-use nvm_core::remote::download_dist;
-use nvm_core::remote::get_map_versions;
-use nvm_core::utils::get_paths;
-use std::env::consts::{ARCH, OS};
-use std::{fs, time};
+use std::fs;
 
-struct Dist {
-    dir: String,
-    ext: String,
-}
-
-fn get_dist(version: &str) -> Dist {
-    // node-v{v}-{os}-{arch}.{ext}
-    // v:   {semver}
-    // os:  win, linux, darwin
-    // arc: x64, x86, arm64, ...
-    // ext: zip, 7z, tar.gz, tar.xz
-
-    let os = match OS {
-        "windows" => "win",
-        "macos" => "darwin",
-        x => x,
-    };
-    // use .7z on Windows, tar.xz on *NIX for a smaller size.
-    let ext = match os {
-        "win" => "7z",
-        _ => "tar.xz",
-    };
-    let arch = match ARCH {
-        "x86_64" => "x64",
-        "arm" => "arm64",
-        x => x,
-    };
-    let dir = format!("node-v{version}-{os}-{arch}");
-    Dist {
-        dir,
-        ext: ext.to_string(),
-    }
-}
+use nvm_core::local;
+use nvm_core::remote;
+use nvm_core::utils;
 
 pub fn exec(version: &str) -> anyhow::Result<()> {
-    let paths = get_paths()?;
-    let (map, _) = get_map_versions()?;
-
-    let map_version = match map.get(version) {
-        Some(v) => v.to_string(),
-        None => version.to_string(),
+    let (map, _) = remote::get_map_versions()?;
+    let Some(mapped_version) = map.get(version) else {
+        anyhow::bail!("version not found: {}", version);
     };
+    let mapped_version = mapped_version.to_string();
 
-    let dst = paths.all.join(format!("v{}", map_version));
-    if dst.exists() {
-        println!("exists: {}", dst.display());
+    let paths = utils::get_paths()?;
+
+    // check if the version is already installed
+    let dest = paths.home.join(format!("v{}", mapped_version));
+    if !dest.exists() {
+        fs::create_dir(&dest)?;
+    }
+    if utils::is_valid_nodejs(&dest) {
+        println!("exists: {}", dest.display());
         return Ok(());
     }
 
-    let dist = get_dist(&map_version);
-
+    // get distribution info
+    let dist = utils::get_dist(&mapped_version);
     let file = format!("{}.{}", dist.dir, dist.ext);
-    let src = paths.tmp.join(&file);
 
-    if !src.exists() {
-        download_dist(&map_version, &file, &src)?;
+    let cache = paths.cache.join(&file);
+    // check if the version is already in cache
+    if cache.exists() {
+        println!("found cache: {}", cache.display());
+        if local::check_sha256sum(&paths.cache, &file)? {
+            println!("checksum verified.");
+            local::extract_dist(&cache, &dest)?;
+            println!("installed: {}", mapped_version);
+            return Ok(());
+        }
     }
-    // dbg!(&src);
-    // dbg!(&all);
+    // if not, download the distribution
+    remote::download_dist(&mapped_version, &file, &paths.cache)?;
+    // extract the distribution
+    local::extract_dist(&cache, &dest)?;
 
-    let spinner = ProgressBar::new_spinner();
-    spinner.enable_steady_tick(time::Duration::from_millis(100));
-    spinner.set_message("Extracting...");
-
-    #[cfg(target_family = "unix")]
-    let ok = {
-        use std::process::Command;
-        Command::new("tar")
-            .arg("-xf")
-            .arg(src)
-            .arg("-C")
-            .arg(&paths.all)
-            .status()
-            .is_ok_and(|s| s.success())
-    };
-
-    #[cfg(target_family = "windows")]
-    let ok = sevenz_rust::decompress_file(src, &paths.all).is_ok();
-
-    if !ok {
-        anyhow::bail!("failed to extract: {}", version);
-    }
-
-    spinner.finish_with_message("Extracted.");
-
-    if fs::rename(paths.all.join(dist.dir), dst).is_err() {
-        anyhow::bail!("failed to install: {}", version);
-    }
-    println!("installed: {}", map_version);
+    println!("installed: {}", mapped_version);
     Ok(())
 }

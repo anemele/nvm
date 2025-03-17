@@ -1,18 +1,12 @@
 use colored::Colorize;
-use nvm_core::local::LocalVersions;
-use nvm_core::local::query_local;
-use nvm_core::remote::get_map_versions;
-use nvm_core::utils::get_paths;
+use nvm_core::local;
+use nvm_core::remote;
 use std::collections::HashSet;
 
 pub fn exec() -> anyhow::Result<()> {
-    let (map, vec) = get_map_versions()?;
+    let (map, vec) = remote::get_map_versions()?;
 
-    let local_versions = if let Ok(paths) = get_paths() {
-        query_local(&paths.all).unwrap_or_default()
-    } else {
-        LocalVersions::default()
-    };
+    let local_versions = local::query().unwrap_or_default();
 
     let mut local_versions_set = HashSet::new();
     for v in local_versions.versions {

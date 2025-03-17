@@ -5,8 +5,8 @@ use reqwest::header::CONTENT_LENGTH;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::io::Write;
-// use serde_json::Value;
 use std::path::Path;
+// use serde_json::Value;
 use std::{fs, time};
 
 #[derive(Debug, Deserialize)]
@@ -61,13 +61,13 @@ pub fn get_map_versions() -> anyhow::Result<(VersionMap, VersionVec)> {
 
 static CHUNK_SIZE: u64 = 1024 * 1024;
 
-pub fn download_dist(version: &str, file: &str, output: &Path) -> anyhow::Result<()> {
+pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<()> {
     let client = Client::new();
 
     let spinner = ProgressBar::new_spinner();
     spinner.enable_steady_tick(time::Duration::from_millis(100));
-    spinner.set_message("Fetching Checksum ...");
 
+    spinner.set_message("Fetching Checksum ...");
     let url = get_node_url(&format!("v{}/SHASUMS256.txt", version));
     // dbg!(&url);
     let sha256_txt = client
@@ -79,11 +79,15 @@ pub fn download_dist(version: &str, file: &str, output: &Path) -> anyhow::Result
     // dbg!(&file);
     // dbg!(&sha256_txt);
     let Some(sha256_line) = sha256_txt.lines().find(|line| line.ends_with(file)) else {
-        anyhow::bail!("  not found SHASUMS256.txt for {}.", file);
+        anyhow::bail!("not found SHASUMS256.txt for {}.", file);
     };
     let Some(sha256_expected) = sha256_line.split_whitespace().next() else {
-        anyhow::bail!("  not found checksum for {}.", file);
+        anyhow::bail!("not found checksum for {}.", file);
     };
+    fs::write(
+        cache.join(format!("{}.sha256", file)),
+        sha256_expected.as_bytes(),
+    )?;
     spinner.finish_and_clear();
 
     spinner.set_message("Fetching Head Info ...");
@@ -101,7 +105,7 @@ pub fn download_dist(version: &str, file: &str, output: &Path) -> anyhow::Result
         .parse::<u64>()?;
     spinner.finish_and_clear();
 
-    let mut out_file = fs::File::create(output)?;
+    let mut cache_file = fs::File::create(cache.join(file))?;
     let mut hasher = Sha256::new();
 
     let pb = ProgressBar::new(content_length);
@@ -122,7 +126,7 @@ pub fn download_dist(version: &str, file: &str, output: &Path) -> anyhow::Result
             .timeout(time::Duration::from_secs(10))
             .send()?
             .bytes()?;
-        out_file.write(&buf)?;
+        cache_file.write(&buf)?;
         hasher.update(&buf);
         pb.inc(buf.len() as u64);
         start = end + 1;
@@ -132,9 +136,9 @@ pub fn download_dist(version: &str, file: &str, output: &Path) -> anyhow::Result
 
     let sha256_actual = format!("{:x}", hasher.finalize());
     if sha256_expected == sha256_actual {
-        println!("  Checksum verified.");
+        println!("Checksum verified.");
     } else {
-        anyhow::bail!("  Checksum mismatched.");
+        anyhow::bail!("Checksum mismatched.");
     }
 
     Ok(())

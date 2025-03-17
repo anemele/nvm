@@ -1,15 +1,12 @@
-use nvm_core::local::query_local;
-use nvm_core::semver::map_versions;
-use nvm_core::utils::get_paths;
+use nvm_core::local;
+use nvm_core::semver;
+use nvm_core::utils;
+use nvm_core::utils::get_dist;
 use std::fs;
 
 pub fn exec(version: &str) -> anyhow::Result<()> {
-    let paths = get_paths()?;
-
-    let local_versions = query_local(&paths.all)?;
-
-    let (map, _) = map_versions(local_versions.versions);
-
+    let local_versions = local::query()?;
+    let (map, _) = semver::map_versions(local_versions.versions);
     let map_version = match map.get(version) {
         Some(s) => s.to_string(),
         None => version.to_string(),
@@ -20,9 +17,9 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let want = paths.all.join(format!("v{}", map_version));
-    #[cfg(target_family = "unix")]
-    let want = want.join("bin");
+    let paths = utils::get_paths()?;
+    let dist = get_dist(&map_version).dir;
+    let want = paths.home.join(format!("v{}", map_version)).join(dist);
 
     if !want.exists() {
         println!("not found: {}", version);
@@ -31,24 +28,19 @@ pub fn exec(version: &str) -> anyhow::Result<()> {
 
     #[cfg(target_family = "windows")]
     {
-        if paths.bin.exists() && fs::remove_dir_all(&paths.bin).is_err() {
-            anyhow::bail!("failed to remove link: {}", paths.bin.display());
+        if paths.current.exists() && fs::remove_dir_all(&paths.current).is_err() {
+            anyhow::bail!("failed to remove link: {}", paths.current.display());
         }
 
-        let Some(bin) = paths.bin.to_str() else {
-            anyhow::bail!("failed to convert path to string: {}", paths.bin.display());
+        let Some(bin) = paths.current.to_str() else {
+            anyhow::bail!(
+                "failed to convert path to string: {}",
+                paths.current.display()
+            );
         };
         let Some(want) = want.to_str() else {
             anyhow::bail!("failed to convert path to string: {}", want.display());
         };
-
-        // This method requires run as admin
-        // use std::os::windows::fs::symlink_dir;
-        // if let Err(e) = symlink_dir(want, bin) {
-        //     eprintln!("{}", e)
-        // } else {
-        //     println!("use {}", map_version)
-        // }
 
         use std::process::Command;
         use std::process::Stdio;
