@@ -71,7 +71,6 @@ jobs:
     - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: ${{matrix.toolchain}}
-        default: true
         target: ${{matrix.target}}
     - name: Release build
       uses: clechasseur/rs-cargo@v3
