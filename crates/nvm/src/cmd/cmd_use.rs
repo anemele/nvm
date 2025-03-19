@@ -36,17 +36,16 @@ impl Run for UseCommand {
             return Ok(());
         }
 
+        let current = paths.current;
+
         #[cfg(target_family = "windows")]
         {
-            if paths.current.exists() && fs::remove_dir_all(&paths.current).is_err() {
-                anyhow::bail!("failed to remove link: {}", paths.current.display());
+            if current.exists() && fs::remove_dir_all(&current).is_err() {
+                anyhow::bail!("failed to remove link: {}", current.display());
             }
 
-            let Some(bin) = paths.current.to_str() else {
-                anyhow::bail!(
-                    "failed to convert path to string: {}",
-                    paths.current.display()
-                );
+            let Some(bin) = current.to_str() else {
+                anyhow::bail!("failed to convert path to string: {}", current.display());
             };
             let Some(want) = want.to_str() else {
                 anyhow::bail!("failed to convert path to string: {}", want.display());
@@ -72,13 +71,13 @@ impl Run for UseCommand {
 
         #[cfg(target_family = "unix")]
         {
-            if paths.bin.exists() && fs::remove_file(&paths.bin).is_err() {
-                anyhow::bail!("failed to remove link: {}", paths.bin.display());
+            if current.exists() && fs::remove_file(&current).is_err() {
+                anyhow::bail!("failed to remove link: {}", current.display());
             }
 
             use std::os::unix::fs::symlink;
 
-            if symlink(want, paths.bin).is_ok() {
+            if symlink(want, current).is_ok() {
                 println!("use {}", map_version)
             } else {
                 anyhow::bail!("fail to use {}", version);
