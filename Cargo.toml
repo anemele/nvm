@@ -1,3 +1,3 @@
 [workspace]
 resolver = "3"
-members = ["crates/nvm-core", "crates/nvm-cmd", "crates/nvm"]
+members = ["crates/nvm-core", "crates/nvm"]

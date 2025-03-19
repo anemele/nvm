@@ -1,11 +1,12 @@
 [package]
 name = "nvm"
-version = "0.6.0"
-edition = "2024"
+version = "0.6.1"
 license = "MIT"
+edition = "2024"
 
 [dependencies]
 anyhow = "1.0.86"
 clap = { version = "4.4.18", features = ["derive"] }
+colored = "2.1.0"
 
-nvm-cmd = { path = "../nvm-cmd" }
+nvm-core = { path = "../nvm-core" }
