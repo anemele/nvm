@@ -108,6 +108,11 @@ jobs:
         name: x86_64-apple-darwin-portable
         path: target/x86_64-apple-darwin-portable
 
+    - name: Add executable permission to *nix binary
+      run: |
+        chmod +x target/x86_64-unknown-linux-gnu/nvm
+        chmod +x target/x86_64-apple-darwin/nvm
+
     - name: Export version
       run: |
         export VERSION=$(echo $GH_REF | sed 's:refs/tags/v::')
@@ -120,15 +125,15 @@ jobs:
         mkdir public
 
         cd target/x86_64-pc-windows-msvc-portable
-        zip -r ../../public/nvm-${{ env.VERSION }}-x86_64-pc-windows-msvc-portable.zip .
+        zip -r ../../public/nvm-${{ env.VERSION }}-x86_64-pc-windows-msvc-portable.zip nvm.exe
         cd ../..
 
         cd target/x86_64-unknown-linux-gnu-portable
-        tar -czvf ../../public/nvm-${{ env.VERSION }}-x86_64-unknown-linux-gnu-portable.tar.gz .
+        tar -czvf ../../public/nvm-${{ env.VERSION }}-x86_64-unknown-linux-gnu-portable.tar.gz nvm
         cd ../..
 
         cd target/x86_64-apple-darwin-portable
-        tar -czvf ../../public/nvm-${{ env.VERSION }}-x86_64-apple-darwin-portable.tar.gz .
+        tar -czvf ../../public/nvm-${{ env.VERSION }}-x86_64-apple-darwin-portable.tar.gz nvm
         cd ../..
 
     - uses: actions/upload-artifact@v4
