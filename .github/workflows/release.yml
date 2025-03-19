@@ -27,13 +27,12 @@ jobs:
             toolchain: stable
     steps:
     - uses: actions/checkout@v4
-    - uses: actions-rs/toolchain@v1
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: ${{matrix.toolchain}}
-        default: true
         target: ${{matrix.target}}
     - name: Test
-      uses: actions-rs/cargo@v1
+      uses: clechasseur/rs-cargo@v3
       with:
         command: test
         args: --target ${{matrix.target}}
@@ -69,13 +68,13 @@ jobs:
             toolchain: stable
     steps:
     - uses: actions/checkout@v4
-    - uses: actions-rs/toolchain@v1
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: ${{matrix.toolchain}}
         default: true
         target: ${{matrix.target}}
     - name: Release build
-      uses: actions-rs/cargo@v1
+      uses: clechasseur/rs-cargo@v3
       with:
         command: build
         args: --release ${{matrix.bins}} --target ${{matrix.target}}
