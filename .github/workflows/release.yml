@@ -110,8 +110,8 @@ jobs:
 
     - name: Add executable permission to *nix binary
       run: |
-        chmod +x target/x86_64-unknown-linux-gnu/nvm
-        chmod +x target/x86_64-apple-darwin/nvm
+        chmod +x target/x86_64-unknown-linux-gnu-portable/nvm
+        chmod +x target/x86_64-apple-darwin-portable/nvm
 
     - name: Export version
       run: |
