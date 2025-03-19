@@ -12,15 +12,20 @@ jobs:
     strategy:
       matrix:
         label: [
-          x86_64-pc-windows-msvc-portable
-          ]
+          x86_64-pc-windows-msvc-portable,
+          x86_64-unknown-linux-gnu-portable
+        ]
         include:
           - label: x86_64-pc-windows-msvc-portable
             target: x86_64-pc-windows-msvc
             bins: --bin nvm
+            ext: .exe
             os: windows
-            features:
-            rustflags:
+            toolchain: stable
+          - label: x86_64-unknown-linux-gnu-portable
+            target: x86_64-unknown-linux-gnu
+            bins: --bin nvm
+            exe:
             toolchain: stable
     steps:
     - uses: actions/checkout@v4
@@ -33,30 +38,28 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: build
-        use-cross: ${{ matrix.os == 'ubuntu' }}
+        # use-cross: ${{ matrix.os == 'ubuntu' }}
         args: --release ${{matrix.bins}} --target ${{matrix.target}}
-      env:
-        CARGO_TARGET_x86_64-unknown-linux-musl: ${{matrix.rustflags}}
-        CARGO_TARGET_i686-unknown-linux-musl: ${{matrix.rustflags}}
-        CARGO_TARGET_aarch64-unknown-linux-musl: ${{matrix.rustflags}}
     - uses: actions/upload-artifact@v4
       with:
         name: ${{matrix.label}}
         path: |
-          target/${{matrix.target}}/release/nvm.exe
+          target/${{matrix.target}}/release/nvm${{matrix.ext}}
 
   test:
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
         target: [
-          x86_64-pc-windows-msvc
-          ]
+          x86_64-pc-windows-msvc,
+          x86_64-unknown-linux-gnu
+        ]
         include:
           - target: x86_64-pc-windows-msvc
             os: windows
-            features:
-            rustflags:
+            toolchain: stable
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu
             toolchain: stable
     steps:
     - uses: actions/checkout@v4
@@ -69,7 +72,7 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        use-cross: ${{ matrix.os == 'ubuntu' }}
+        # use-cross: ${{ matrix.os == 'ubuntu' }}
         args: --target ${{matrix.target}}
 
   package-portable:
@@ -83,6 +86,11 @@ jobs:
       with:
         name: x86_64-pc-windows-msvc-portable
         path: target/x86_64-pc-windows-msvc-portable
+    - name: Download x86_64-unknown-linux-gnu-portable artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: x86_64-unknown-linux-gnu-portable
+        path: target/x86_64-unknown-linux-gnu-portable
     - name: Export version
       run: |
         export VERSION=$(echo $GH_REF | sed 's:refs/tags/v::')
@@ -92,8 +100,13 @@ jobs:
     - name: Create archives
       run: |
         mkdir public
+
         cd target/x86_64-pc-windows-msvc-portable
         zip -r ../../public/nvm-${{ env.VERSION }}-x86_64-pc-windows-msvc-portable.zip .
+        cd ../..
+
+        cd target/x86_64-unknown-linux-gnu-portable
+        tar -czvf ../../public/nvm-${{ env.VERSION }}-x86_64-unknown-linux-gnu-portable.tar.gz .
         cd ../..
     - uses: actions/upload-artifact@v4
       with:
