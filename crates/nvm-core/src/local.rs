@@ -1,5 +1,5 @@
 use std::fs;
-use std::io::{BufReader, Read};
+use std::io::Read;
 use std::path::Path;
 
 use indicatif::ProgressBar;
@@ -87,7 +87,7 @@ pub fn extract_dist(src: &Path, dest: &Path) -> anyhow::Result<()> {
     #[cfg(target_family = "unix")]
     let ok = {
         let file = fs::File::open(src)?;
-        let reader = BufReader::new(file);
+        let reader = std::io::BufReader::new(file);
         let gz_reader = xz2::read::XzDecoder::new(reader);
         tar::Archive::new(gz_reader).unpack(dest).is_ok()
     };
