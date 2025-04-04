@@ -15,7 +15,7 @@ pub struct UseCommand {
 impl Run for UseCommand {
     fn run(&self) -> anyhow::Result<()> {
         let local_versions = local::query()?;
-        let (map, _) = semver::map_versions(local_versions.versions);
+        let (map, _) = semver::map_versions(&local_versions.versions);
         let version = &self.version;
         let map_version = match map.get(version) {
             Some(s) => s.to_string(),

@@ -15,7 +15,7 @@ impl Run for UninstallCommand {
     fn run(&self) -> anyhow::Result<()> {
         let local_versions = local::query()?;
         // dbg!(&local_versions);
-        let (map, _) = semver::map_versions(local_versions.versions);
+        let (map, _) = semver::map_versions(&local_versions.versions);
         // dbg!(&map);
         let version = &self.version;
         let map_version = match map.get(version) {

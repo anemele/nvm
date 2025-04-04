@@ -11,7 +11,7 @@ pub struct ListRemoteCommand;
 
 impl Run for ListRemoteCommand {
     fn run(&self) -> anyhow::Result<()> {
-        let (map, vec) = remote::get_map_versions()?;
+        let (map, vec, _) = remote::get_versions()?;
 
         let local_versions = local::query().unwrap_or_default();
 

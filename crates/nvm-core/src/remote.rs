@@ -1,4 +1,4 @@
-use crate::semver::{VersionMap, VersionVec};
+use crate::semver::{VersionMap, VersionVec, map_versions};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
@@ -48,7 +48,7 @@ fn get_index() -> anyhow::Result<Indexes> {
     Ok(i)
 }
 
-pub fn get_map_versions() -> anyhow::Result<(VersionMap, VersionVec)> {
+pub fn get_versions() -> anyhow::Result<(VersionMap, VersionVec, VersionVec)> {
     let indexes = get_index()?;
 
     let versions: Vec<String> = indexes
@@ -56,7 +56,8 @@ pub fn get_map_versions() -> anyhow::Result<(VersionMap, VersionVec)> {
         .map(|index| index.version[1..].to_owned())
         .collect();
 
-    Ok(crate::semver::map_versions(versions))
+    let (m, v) = map_versions(&versions);
+    Ok((m, v, versions))
 }
 
 static CHUNK_SIZE: u64 = 1024 * 1024;

@@ -14,11 +14,17 @@ pub struct InstallCommand {
 
 impl Run for InstallCommand {
     fn run(&self) -> anyhow::Result<()> {
-        let (map, _) = remote::get_map_versions()?;
-        let Some(mapped_version) = map.get(&self.version) else {
-            anyhow::bail!("version not found: {}", &self.version);
+        let (map, _, vec) = remote::get_versions()?;
+        let mapped_version = match map.get(&self.version) {
+            Some(v) => v.to_string(),
+            None => {
+                if !vec.contains(&self.version) {
+                    anyhow::bail!("{} is not a valid version", &self.version);
+                }
+                eprintln!("WARNING: {} is not a MAIN version", &self.version);
+                self.version.clone()
+            }
         };
-        let mapped_version = mapped_version.to_string();
 
         let paths = utils::get_paths()?;
 

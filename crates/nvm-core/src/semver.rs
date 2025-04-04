@@ -5,7 +5,7 @@ use std::str::FromStr;
 pub type VersionMap = HashMap<String, Version>;
 pub type VersionVec = Vec<String>;
 
-pub fn map_versions(versions: Vec<String>) -> (VersionMap, VersionVec) {
+pub fn map_versions(versions: &Vec<String>) -> (VersionMap, VersionVec) {
     let mut map = VersionMap::new();
     let mut vec = VersionVec::new();
 
@@ -41,7 +41,7 @@ fn test_map_versions() {
         "20.0.0", "19.1.0", "19.0.1", "18.19.0", "18.18.2", "18.18.1", "18.18.0", "18.17.1",
     ];
     let sample: Vec<String> = sample.into_iter().map(|s| s.to_string()).collect();
-    let (map, vec) = map_versions(sample);
+    let (map, vec) = map_versions(&sample);
 
     assert_eq!(vec.len(), 9);
     assert_eq!(
