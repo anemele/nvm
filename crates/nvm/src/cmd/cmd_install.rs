@@ -19,7 +19,7 @@ impl Run for InstallCommand {
             Some(v) => v.to_string(),
             None => {
                 if !vec.contains(&self.version) {
-                    anyhow::bail!("{} is not a valid version", &self.version);
+                    anyhow::bail!("version not found: {}", &self.version);
                 }
                 eprintln!("WARNING: {} is not a MAIN version", &self.version);
                 self.version.clone()
