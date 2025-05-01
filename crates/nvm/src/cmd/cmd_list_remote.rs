@@ -7,11 +7,14 @@ use std::collections::HashSet;
 use super::Run;
 
 #[derive(Debug, Parser)]
-pub struct ListRemoteCommand;
+pub struct ListRemoteCommand {
+    /// Filter by prefix
+    prefix: Option<String>,
+}
 
 impl Run for ListRemoteCommand {
     fn run(&self) -> anyhow::Result<()> {
-        let (map, vec, _) = remote::get_versions()?;
+        let (map, mut vec, _) = remote::get_versions()?;
 
         let local_versions = local::query().unwrap_or_default();
 
@@ -20,9 +23,15 @@ impl Run for ListRemoteCommand {
             local_versions_set.insert(v);
         }
 
-        #[cfg(target_family = "windows")]
-        {
-            colored::control::set_virtual_terminal(true).unwrap();
+        #[cfg(windows)]
+        colored::control::set_virtual_terminal(true).unwrap();
+
+        if let Some(prefix) = &self.prefix {
+            vec.retain(|v| v.starts_with(prefix));
+            if vec.is_empty() {
+                println!("No versions found with prefix: {}", prefix);
+                return Ok(());
+            }
         }
 
         for key in vec {

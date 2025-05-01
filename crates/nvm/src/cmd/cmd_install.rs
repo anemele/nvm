@@ -1,6 +1,7 @@
 use std::fs;
 
 use clap::Parser;
+use colored::Colorize;
 use nvm_core::local;
 use nvm_core::remote;
 use nvm_core::utils;
@@ -21,7 +22,11 @@ impl Run for InstallCommand {
                 if !vec.contains(&self.version) {
                     anyhow::bail!("version not found: {}", &self.version);
                 }
-                eprintln!("WARNING: {} is not a MAIN version", &self.version);
+                eprintln!(
+                    "{}: {} is not a latest version",
+                    "WARNING".yellow(),
+                    &self.version
+                );
                 self.version.clone()
             }
         };
@@ -34,7 +39,7 @@ impl Run for InstallCommand {
             fs::create_dir(&dest)?;
         }
         if utils::is_valid_nodejs(&dest) {
-            println!("exists: {}", dest.display());
+            println!("Exists: {}", dest.display());
             return Ok(());
         }
 
@@ -43,22 +48,14 @@ impl Run for InstallCommand {
         let file = format!("{}.{}", dist.dir, dist.ext);
 
         let cache = paths.cache.join(&file);
-        // check if the version is already in cache
-        if cache.exists() {
-            println!("found cache: {}", cache.display());
-            if local::check_sha256sum(&paths.cache, &file)? {
-                println!("checksum verified.");
-                local::extract_dist(&cache, &dest)?;
-                println!("installed: {}", mapped_version);
-                return Ok(());
-            }
+
+        if !cache.exists() || !local::check_sha256sum(&paths.cache, &file)? {
+            remote::download_dist(&mapped_version, &file, &paths.cache)?;
         }
-        // if not, download the distribution
-        remote::download_dist(&mapped_version, &file, &paths.cache)?;
-        // extract the distribution
+
         local::extract_dist(&cache, &dest)?;
 
-        println!("installed: {}", mapped_version);
+        println!("Installed: {}", mapped_version);
         Ok(())
     }
 }

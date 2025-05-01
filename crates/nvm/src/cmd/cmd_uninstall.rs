@@ -28,15 +28,15 @@ impl Run for UninstallCommand {
         let want = paths.home.join(format!("v{}", map_version));
         if want.is_dir() {
             if fs::remove_dir_all(want).is_ok() {
-                println!("removed: {}", map_version);
+                println!("Removed: {}", map_version);
                 if map_version == local_versions.current {
                     let _ = fs::remove_dir(paths.current);
                 }
             } else {
-                eprintln!("failed to remove: {}", map_version)
+                eprintln!("Failed to remove: {}", map_version)
             }
         } else {
-            println!("not found: {}", version)
+            println!("Not found: {}", version)
         }
 
         Ok(())

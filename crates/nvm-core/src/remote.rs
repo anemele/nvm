@@ -1,5 +1,5 @@
 use crate::semver::{VersionMap, VersionVec, map_versions};
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use serde::Deserialize;
@@ -32,20 +32,21 @@ fn get_node_url(path: &str) -> String {
 
 fn get_index() -> anyhow::Result<Indexes> {
     let url = get_node_url("index.json");
+
     let spinner = ProgressBar::new_spinner();
     spinner.enable_steady_tick(time::Duration::from_millis(100));
     spinner.set_message("Fetching index.json");
 
-    let i = Client::new()
+    let res = Client::new()
         .get(url)
         .header("User-Agent", "NVM Client")
         .timeout(time::Duration::from_secs(10))
         .send()?
         .json::<Indexes>()?;
 
-    spinner.finish_with_message("Read index.json.");
+    spinner.finish_and_clear();
 
-    Ok(i)
+    Ok(res)
 }
 
 pub fn get_versions() -> anyhow::Result<(VersionMap, VersionVec, VersionVec)> {
@@ -63,14 +64,16 @@ pub fn get_versions() -> anyhow::Result<(VersionMap, VersionVec, VersionVec)> {
 static CHUNK_SIZE: u64 = 1024 * 1024;
 
 pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<()> {
+    let mp = MultiProgress::new();
+
+    let sp = mp.add(ProgressBar::new_spinner());
+    sp.enable_steady_tick(time::Duration::from_millis(100));
+
     let client = Client::new();
-
-    let spinner = ProgressBar::new_spinner();
-    spinner.enable_steady_tick(time::Duration::from_millis(100));
-
-    spinner.set_message("Fetching Checksum ...");
     let url = get_node_url(&format!("v{}/SHASUMS256.txt", version));
-    // dbg!(&url);
+
+    sp.set_message(format!("Fetching Checksum {}", url));
+
     let sha256_txt = client
         .get(url)
         .header("User-Agent", "NVM Client")
@@ -80,41 +83,43 @@ pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<
     // dbg!(&file);
     // dbg!(&sha256_txt);
     let Some(sha256_line) = sha256_txt.lines().find(|line| line.ends_with(file)) else {
-        anyhow::bail!("not found SHASUMS256.txt for {}.", file);
+        anyhow::bail!("Not found SHASUMS256.txt for {}.", file);
     };
     let Some(sha256_expected) = sha256_line.split_whitespace().next() else {
-        anyhow::bail!("not found checksum for {}.", file);
+        anyhow::bail!("Not found checksum for {}.", file);
     };
     fs::write(
         cache.join(format!("{}.sha256", file)),
         sha256_expected.as_bytes(),
     )?;
-    spinner.finish_and_clear();
 
-    spinner.set_message("Fetching Head Info ...");
     let url = get_node_url(&format!("v{}/{}", version, file));
-    let res = client
+
+    sp.set_message("Fetching Head Info");
+
+    let resp = client
         .head(&url)
         .header("User-Agent", "NVM Client")
         .timeout(time::Duration::from_secs(10))
         .send()?;
-    let headers = res.headers();
+    let headers = resp.headers();
     let content_length = headers
         .get(CONTENT_LENGTH)
         .unwrap()
         .to_str()?
         .parse::<u64>()?;
-    spinner.finish_and_clear();
 
     let mut cache_file = fs::File::create(cache.join(file))?;
     let mut hasher = Sha256::new();
 
-    let pb = ProgressBar::new(content_length);
+    let pb = mp.add(ProgressBar::new(content_length));
     pb.set_style(
         ProgressStyle::default_bar()
         .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {bytes}/{total_bytes} ({eta})")?
         .progress_chars("#>-"));
     pb.enable_steady_tick(time::Duration::from_millis(100));
+
+    sp.set_message(format!("Downloading {}", url));
 
     let mut start = 0;
     while start < content_length {
@@ -134,11 +139,13 @@ pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<
     }
 
     pb.finish_and_clear();
+    sp.finish_and_clear();
+
+    mp.remove(&pb);
+    mp.remove(&sp);
 
     let sha256_actual = format!("{:x}", hasher.finalize());
-    if sha256_expected == sha256_actual {
-        println!("Checksum verified.");
-    } else {
+    if sha256_expected != sha256_actual {
         anyhow::bail!("Checksum mismatched.");
     }
 

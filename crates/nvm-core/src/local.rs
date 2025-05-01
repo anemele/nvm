@@ -1,6 +1,7 @@
 use std::fs;
 use std::io::Read;
 use std::path::Path;
+use std::time::Duration;
 
 use indicatif::ProgressBar;
 use sha2::{Digest, Sha256};
@@ -81,10 +82,11 @@ pub fn check_sha256sum(path: &Path, file: &str) -> anyhow::Result<bool> {
 
 pub fn extract_dist(src: &Path, dest: &Path) -> anyhow::Result<()> {
     let spinner = ProgressBar::new_spinner();
+    spinner.enable_steady_tick(Duration::from_millis(100));
 
-    spinner.set_message("Extracting...");
+    spinner.set_message("Extracting");
 
-    #[cfg(target_family = "unix")]
+    #[cfg(unix)]
     let ok = {
         let file = fs::File::open(src)?;
         let reader = std::io::BufReader::new(file);
@@ -92,7 +94,7 @@ pub fn extract_dist(src: &Path, dest: &Path) -> anyhow::Result<()> {
         tar::Archive::new(gz_reader).unpack(dest).is_ok()
     };
 
-    #[cfg(target_family = "windows")]
+    #[cfg(windows)]
     let ok = sevenz_rust::decompress_file(src, dest).is_ok();
 
     let dot_file = dest.join(UNPACKED_SUCCESS_FILE);
@@ -100,13 +102,13 @@ pub fn extract_dist(src: &Path, dest: &Path) -> anyhow::Result<()> {
         if dot_file.exists() {
             let _ = fs::remove_file(&dot_file);
         }
-        anyhow::bail!("failed to extract.");
+        anyhow::bail!("Failed to extract.");
     }
     if !dot_file.exists() {
         fs::File::create(dot_file)?;
     }
 
-    spinner.finish_with_message("Extracted.");
+    spinner.finish_and_clear();
 
     Ok(())
 }

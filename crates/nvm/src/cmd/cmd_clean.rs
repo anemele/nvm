@@ -14,12 +14,12 @@ impl Run for CleanCommand {
 
         if fs::remove_dir_all(&paths.cache).is_err() {
             anyhow::bail!(
-                "failed to clean cache, do it manually. ({})",
+                "Failed to clean cache, do it manually. ({})",
                 paths.cache.display()
             );
         }
 
-        println!("cache cleaned");
+        println!("Cache cleaned");
         Ok(())
     }
 }
