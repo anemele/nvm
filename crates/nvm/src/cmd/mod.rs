@@ -29,6 +29,7 @@ enum Cli {
     ListRemote(ListRemoteCommand),
 
     /// Use some version
+    #[clap(visible_alias = "set")]
     Use(UseCommand),
 
     /// Install some version

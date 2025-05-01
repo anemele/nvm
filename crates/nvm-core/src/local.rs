@@ -84,7 +84,7 @@ pub fn extract_dist(src: &Path, dest: &Path) -> anyhow::Result<()> {
     let spinner = ProgressBar::new_spinner();
     spinner.enable_steady_tick(Duration::from_millis(100));
 
-    spinner.set_message("Extracting");
+    spinner.set_message(format!("Extracting {}", src.display()));
 
     #[cfg(unix)]
     let ok = {

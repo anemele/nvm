@@ -35,7 +35,7 @@ fn get_index() -> anyhow::Result<Indexes> {
 
     let spinner = ProgressBar::new_spinner();
     spinner.enable_steady_tick(time::Duration::from_millis(100));
-    spinner.set_message("Fetching index.json");
+    spinner.set_message(format!("Fetching {}", url));
 
     let res = Client::new()
         .get(url)
@@ -95,7 +95,7 @@ pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<
 
     let url = get_node_url(&format!("v{}/{}", version, file));
 
-    sp.set_message("Fetching Head Info");
+    sp.set_message(format!("HEAD {}", url));
 
     let resp = client
         .head(&url)

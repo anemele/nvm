@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/nvm-core", "crates/nvm"]
 
 [workspace.package]
-version = "0.6.3"
+version = "0.7.0"
 license = "MIT"
 edition = "2024"
 
