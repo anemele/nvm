@@ -1,5 +1,6 @@
 use clap::Parser;
 use cmd_clean::CleanCommand;
+use cmd_env::EnvCommand;
 use cmd_install::InstallCommand;
 use cmd_list_local::ListLocalCommand;
 use cmd_list_remote::ListRemoteCommand;
@@ -7,6 +8,7 @@ use cmd_uninstall::UninstallCommand;
 use cmd_use::UseCommand;
 
 mod cmd_clean;
+mod cmd_env;
 mod cmd_install;
 mod cmd_list_local;
 mod cmd_list_remote;
@@ -40,6 +42,9 @@ enum Cli {
     #[clap(visible_alias = "rm")]
     Uninstall(UninstallCommand),
 
+    /// Print env
+    Env(EnvCommand),
+
     /// Clean cache
     Clean(CleanCommand),
 }
@@ -52,6 +57,7 @@ pub fn run() -> anyhow::Result<()> {
         Cli::Use(cmd) => cmd.run(),
         Cli::Install(cmd) => cmd.run(),
         Cli::Uninstall(cmd) => cmd.run(),
+        Cli::Env(cmd) => cmd.run(),
         Cli::Clean(cmd) => cmd.run(),
     }
 }

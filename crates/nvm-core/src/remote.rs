@@ -27,7 +27,7 @@ pub struct Index {
 pub type Indexes = Vec<Index>;
 
 fn get_node_url(path: &str) -> String {
-    crate::mirror::get_mirror() + path
+    crate::consts::get_mirror() + path
 }
 
 fn get_index() -> anyhow::Result<Indexes> {
