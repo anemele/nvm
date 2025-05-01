@@ -25,7 +25,7 @@ impl Run for UninstallCommand {
         // dbg!(&map_version);
 
         let paths = utils::get_paths()?;
-        let want = paths.home.join(&format!("v{}", map_version));
+        let want = paths.home.join(format!("v{}", map_version));
         if want.is_dir() {
             if fs::remove_dir_all(want).is_ok() {
                 println!("removed: {}", map_version);

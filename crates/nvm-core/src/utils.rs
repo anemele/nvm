@@ -1,7 +1,7 @@
 use crate::consts::{NODE_CACHE, NODE_CURRENT, NODE_HOME, UNPACKED_SUCCESS_FILE};
 use std::env::consts::{ARCH, OS};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 // use serde_json::Value;
 
 // pub fn is_lts(lts: Value) -> bool {
@@ -39,7 +39,7 @@ pub fn get_paths() -> anyhow::Result<NodePaths> {
     let cache = home.join(NODE_CACHE);
     let current = home.join(NODE_CURRENT);
 
-    for path in vec![&home, &cache] {
+    for path in [&home, &cache] {
         if path.exists() {
             continue;
         }
@@ -90,6 +90,6 @@ pub fn get_dist(version: &str) -> Dist {
     }
 }
 
-pub fn is_valid_nodejs(path: &PathBuf) -> bool {
+pub fn is_valid_nodejs(path: &Path) -> bool {
     path.join(UNPACKED_SUCCESS_FILE).exists()
 }

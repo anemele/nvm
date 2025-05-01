@@ -29,7 +29,7 @@ impl Run for ListRemoteCommand {
             let v = map[&key].to_string();
             if v == local_versions.current {
                 println!("{}", format!("* {:7} =>  {}", key, v).green())
-            } else if local_versions_set.get(&v).is_some() {
+            } else if local_versions_set.contains(&v) {
                 println!("{}", format!("  {:7} =>  {}", key, v).green())
             } else {
                 println!("  {:7} =>  {}", key, v)

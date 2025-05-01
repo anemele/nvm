@@ -1,11 +1,11 @@
 [package]
 name = "nvm"
-version = "0.6.3"
-license = "MIT"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-anyhow = "1.0.86"
+anyhow.workspace = true
+
 clap = { version = "4.4.18", features = ["derive"] }
 colored = "2.1.0"
 

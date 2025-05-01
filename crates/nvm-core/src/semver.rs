@@ -10,7 +10,7 @@ pub fn map_versions(versions: &Vec<String>) -> (VersionMap, VersionVec) {
     let mut vec = VersionVec::new();
 
     for version in versions {
-        let Ok(sv) = Version::from_str(&version) else {
+        let Ok(sv) = Version::from_str(version) else {
             continue;
         };
 

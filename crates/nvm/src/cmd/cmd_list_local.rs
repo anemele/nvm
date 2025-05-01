@@ -12,7 +12,7 @@ impl Run for ListLocalCommand {
         let local_versions = local::query()?;
         // dbg!(&local_versions);
 
-        if local_versions.versions.len() == 0 {
+        if local_versions.versions.is_empty() {
             println!("no available. install first.");
             return Ok(());
         }

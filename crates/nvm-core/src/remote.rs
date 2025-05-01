@@ -127,7 +127,7 @@ pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<
             .timeout(time::Duration::from_secs(10))
             .send()?
             .bytes()?;
-        cache_file.write(&buf)?;
+        cache_file.write_all(&buf)?;
         hasher.update(&buf);
         pb.inc(buf.len() as u64);
         start = end + 1;

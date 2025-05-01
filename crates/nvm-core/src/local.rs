@@ -17,7 +17,7 @@ pub struct LocalVersions {
 
 fn get_ver_from_name(path: impl AsRef<Path>) -> Option<String> {
     let name = path.as_ref().file_name()?.to_str()?;
-    name.split("-").skip(1).next().map(|s| s[1..].to_string())
+    name.split("-").nth(1).map(|s| s[1..].to_string())
 }
 
 fn get_current_version() -> anyhow::Result<String> {
@@ -46,7 +46,7 @@ pub fn query() -> anyhow::Result<LocalVersions> {
             continue;
         };
         // dbg!(&parent);
-        if is_valid_nodejs(&parent.to_path_buf()) {
+        if is_valid_nodejs(parent) {
             let Some(v) = get_ver_from_name(path) else {
                 continue;
             };
@@ -55,7 +55,7 @@ pub fn query() -> anyhow::Result<LocalVersions> {
     }
 
     let ret = LocalVersions {
-        current: get_current_version().unwrap_or(String::new()),
+        current: get_current_version().unwrap_or_default(),
         versions,
     };
     Ok(ret)
