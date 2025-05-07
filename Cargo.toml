@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/nvm-core", "crates/nvm"]
+members = ["nvm-core", "nvm"]
 
 [workspace.package]
 version = "0.7.1"
