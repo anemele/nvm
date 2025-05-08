@@ -1,6 +1,6 @@
 use std::fs;
 use std::io::Read;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::Duration;
 
 use indicatif::ProgressBar;
@@ -19,14 +19,16 @@ pub struct LocalVersions {
 fn get_ver_from_name(path: impl AsRef<Path>) -> Option<String> {
     path.as_ref()
         .file_name()?
-        .to_str()
+        .to_str()?
+        .split('-')
+        .nth(1)
         .map(|s| s[1..].to_string())
 }
 
 #[test]
 fn test_get_ver_from_name() {
     assert_eq!(
-        get_ver_from_name(Path::new("/home/unix/.nodejs/v18.20.8")).unwrap(),
+        get_ver_from_name("/home/unix/.nodejs/v18.20.8/node-v18.20.8-linux-x64").unwrap(),
         "18.20.8"
     );
 }
@@ -42,8 +44,7 @@ pub fn query() -> anyhow::Result<LocalVersions> {
 
     let versions = glob::glob(&patterns)?
         .filter_map(|path| path.ok())
-        .filter_map(|path| path.parent().map(PathBuf::from))
-        .filter(|path| is_valid_nodejs(path))
+        .filter(|path| path.parent().is_some_and(is_valid_nodejs))
         .filter_map(get_ver_from_name)
         .collect();
     // dbg!(&versions);

@@ -37,9 +37,9 @@ impl Run for ListRemoteCommand {
         for key in vec {
             let v = map[&key].to_string();
             if v == local_versions.current {
-                println!("{}", format!("* {:7} =>  {}", key, v).green())
+                println!("* {:7} =>  {}", key.green(), v.green())
             } else if local_versions_set.contains(&v) {
-                println!("{}", format!("  {:7} =>  {}", key, v).green())
+                println!("  {:7} =>  {}", key.green(), v.green())
             } else {
                 println!("  {:7} =>  {}", key, v)
             }
