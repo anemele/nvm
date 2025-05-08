@@ -2,22 +2,6 @@ use crate::consts::{NODE_CACHE, NODE_CURRENT, NODE_HOME, UNPACKED_SUCCESS_FILE};
 use std::env::consts::{ARCH, OS};
 use std::fs;
 use std::path::{Path, PathBuf};
-// use serde_json::Value;
-
-// pub fn is_lts(lts: Value) -> bool {
-//     match lts {
-//         Value::String(_) => true,
-//         Value::Bool(b) => b,
-//         _ => false,
-//     }
-// }
-
-// #[test]
-// fn test_is_lts() {
-//     assert!(is_lts(Value::Bool(true)));
-//     assert!(!is_lts(Value::Bool(false)));
-//     assert!(is_lts(Value::String("Iron".to_string())));
-// }
 
 fn get_node_home() -> anyhow::Result<PathBuf> {
     if let Ok(Some(home)) = homedir::get_my_home() {
@@ -40,10 +24,7 @@ pub fn get_paths() -> anyhow::Result<NodePaths> {
     let current = home.join(NODE_CURRENT);
 
     for path in [&home, &cache] {
-        if path.exists() {
-            continue;
-        }
-        if fs::create_dir(path).is_err() {
+        if !path.exists() && fs::create_dir(path).is_err() {
             anyhow::bail!("failed to create dir: {}", path.display());
         }
     }
@@ -73,21 +54,19 @@ pub fn get_dist(version: &str) -> Dist {
         "macos" => "darwin",
         x => x,
     };
-    // use .7z on Windows, tar.xz on *NIX for a smaller size.
-    let ext = match os {
-        "win" => "7z",
-        _ => "tar.xz",
-    };
     let arch = match ARCH {
         "x86_64" => "x64",
         "arm" => "arm64",
         x => x,
     };
     let dir = format!("node-v{version}-{os}-{arch}");
-    Dist {
-        dir,
-        ext: ext.to_string(),
+    // use .7z on Windows, tar.xz on *NIX for a smaller size.
+    let ext = match os {
+        "win" => "7z",
+        _ => "tar.xz",
     }
+    .to_string();
+    Dist { dir, ext }
 }
 
 pub fn is_valid_nodejs(path: &Path) -> bool {

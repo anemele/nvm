@@ -1,6 +1,6 @@
 use std::fs;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use indicatif::ProgressBar;
@@ -17,43 +17,36 @@ pub struct LocalVersions {
 }
 
 fn get_ver_from_name(path: impl AsRef<Path>) -> Option<String> {
-    let name = path.as_ref().file_name()?.to_str()?;
-    name.split("-").nth(1).map(|s| s[1..].to_string())
+    path.as_ref()
+        .file_name()?
+        .to_str()
+        .map(|s| s[1..].to_string())
+}
+
+#[test]
+fn test_get_ver_from_name() {
+    assert_eq!(
+        get_ver_from_name(Path::new("/home/unix/.nodejs/v18.20.8")).unwrap(),
+        "18.20.8"
+    );
 }
 
 fn get_current_version() -> anyhow::Result<String> {
     let paths = utils::get_paths()?;
     let link = fs::read_link(paths.current)?;
-    if let Some(v) = get_ver_from_name(link) {
-        Ok(v)
-    } else {
-        anyhow::bail!("failed to get current version");
-    }
+    get_ver_from_name(link).ok_or_else(|| anyhow::anyhow!("failed to get current version"))
 }
 
 pub fn query() -> anyhow::Result<LocalVersions> {
-    let paths = glob::glob(&format!(
-        "{}/v*/node-v*",
-        utils::get_paths()?.home.display()
-    ))?;
+    let patterns = format!("{}/v*/node-v*", utils::get_paths()?.home.display());
 
-    let mut versions = vec![];
-    for path in paths {
-        // dbg!(&path);
-        let Ok(path) = path else {
-            continue;
-        };
-        let Some(parent) = path.parent() else {
-            continue;
-        };
-        // dbg!(&parent);
-        if is_valid_nodejs(parent) {
-            let Some(v) = get_ver_from_name(path) else {
-                continue;
-            };
-            versions.push(v)
-        }
-    }
+    let versions = glob::glob(&patterns)?
+        .filter_map(|path| path.ok())
+        .filter_map(|path| path.parent().map(PathBuf::from))
+        .filter(|path| is_valid_nodejs(path))
+        .filter_map(get_ver_from_name)
+        .collect();
+    // dbg!(&versions);
 
     let ret = LocalVersions {
         current: get_current_version().unwrap_or_default(),

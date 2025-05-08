@@ -124,7 +124,7 @@ pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<
     let mut start = 0;
     while start < content_length {
         let end = start + CHUNK_SIZE;
-        let range = format!("bytes={}-{}", start, end);
+        let range = format!("bytes={}-{}", start, end - 1);
         let buf = client
             .get(&url)
             .header("User-Agent", "NVM Client")
@@ -135,7 +135,7 @@ pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<
         cache_file.write_all(&buf)?;
         hasher.update(&buf);
         pb.inc(buf.len() as u64);
-        start = end + 1;
+        start = end;
     }
 
     pb.finish_and_clear();
