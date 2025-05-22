@@ -1,11 +1,4 @@
 use clap::Parser;
-use cmd_clean::CleanCommand;
-use cmd_env::EnvCommand;
-use cmd_install::InstallCommand;
-use cmd_list_local::ListLocalCommand;
-use cmd_list_remote::ListRemoteCommand;
-use cmd_uninstall::UninstallCommand;
-use cmd_use::UseCommand;
 
 mod cmd_clean;
 mod cmd_env;
@@ -15,49 +8,49 @@ mod cmd_list_remote;
 mod cmd_uninstall;
 mod cmd_use;
 
-pub(crate) trait Run {
-    fn run(&self) -> anyhow::Result<()>;
-}
-
 #[derive(Parser)]
 #[clap(name = "nvm", author, version, about = "Nodejs Version Manager")]
 enum Cli {
     /// List all installed nodejs
     #[clap(visible_alias = "ls")]
-    List(ListLocalCommand),
+    List,
 
     /// List remote, by default only lts
     #[clap(visible_alias = "lr")]
-    ListRemote(ListRemoteCommand),
+    ListRemote { prefix: Option<String> },
 
     /// Use some version
     #[clap(visible_alias = "set")]
-    Use(UseCommand),
+    Use { version: Option<String> },
 
     /// Install some version
     #[clap(visible_aliases =["i", "add"])]
-    Install(InstallCommand),
+    Install { version: String },
 
     /// Uninstall some version
     #[clap(visible_alias = "rm")]
-    Uninstall(UninstallCommand),
+    Uninstall { version: Vec<String> },
 
     /// Print env
-    Env(EnvCommand),
+    Env,
 
     /// Clean cache
-    Clean(CleanCommand),
+    Clean {
+        #[clap(long)]
+        yes: bool,
+    },
 }
 
 pub fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
+    use Cli::*;
     match cli {
-        Cli::List(cmd) => cmd.run(),
-        Cli::ListRemote(cmd) => cmd.run(),
-        Cli::Use(cmd) => cmd.run(),
-        Cli::Install(cmd) => cmd.run(),
-        Cli::Uninstall(cmd) => cmd.run(),
-        Cli::Env(cmd) => cmd.run(),
-        Cli::Clean(cmd) => cmd.run(),
+        List => cmd_list_local::run(),
+        ListRemote { prefix } => cmd_list_remote::run(prefix),
+        Use { version } => cmd_use::run(version),
+        Install { version } => cmd_install::run(&version),
+        Uninstall { version } => cmd_uninstall::run(version),
+        Env => cmd_env::run(),
+        Clean { yes } => cmd_clean::run(yes),
     }
 }
