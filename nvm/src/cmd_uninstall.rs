@@ -34,19 +34,19 @@ pub(super) fn run(versions: Vec<String>) -> anyhow::Result<()> {
 
     for version in versions {
         let paths = utils::get_paths()?;
-        let want = paths.home.join(format!("v{}", version));
+        let want = paths.home.join(format!("v{version}"));
         if want.is_dir() {
             if fs::remove_dir_all(want).is_ok() {
-                println!("Removed: {}", version);
+                println!("Removed: {version}");
                 if version == local_versions.current {
                     println!("{}: remove current version {}", "WARNING".yellow(), version);
                     let _ = fs::remove_dir(paths.current);
                 }
             } else {
-                eprintln!("Failed to remove: {}", version)
+                eprintln!("Failed to remove: {version}")
             }
         } else {
-            println!("Not found: {}", version)
+            println!("Not found: {version}")
         }
     }
 

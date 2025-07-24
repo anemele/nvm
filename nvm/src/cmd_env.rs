@@ -5,7 +5,7 @@ fn print_env(key: &str, value: &str) {
     #[cfg(unix)]
     println!("{}={}", key, value);
     #[cfg(windows)]
-    println!("set {}={}", key, value);
+    println!("set {key}={value}");
 }
 
 pub(super) fn run() -> anyhow::Result<()> {

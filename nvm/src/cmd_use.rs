@@ -34,16 +34,16 @@ pub(super) fn run(version: Option<String>) -> anyhow::Result<()> {
     };
 
     if map_version == local_versions.current {
-        println!("{} is in use", map_version);
+        println!("{map_version} is in use");
         return Ok(());
     }
 
     let paths = utils::get_paths()?;
     let dist = get_dist(&map_version).dir;
-    let want = paths.home.join(format!("v{}", map_version)).join(dist);
+    let want = paths.home.join(format!("v{map_version}")).join(dist);
 
     if !want.exists() {
-        println!("Not found: {}", version);
+        println!("Not found: {version}");
         return Ok(());
     }
 
@@ -69,7 +69,7 @@ pub(super) fn run(version: Option<String>) -> anyhow::Result<()> {
     };
 
     if ok {
-        println!("Use {}", map_version);
+        println!("Use {map_version}");
     } else {
         anyhow::bail!("Fail to use {}", version);
     }

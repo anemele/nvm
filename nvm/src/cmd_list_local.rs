@@ -19,7 +19,7 @@ pub(super) fn run() -> anyhow::Result<()> {
         if v == local_versions.current {
             println!("* {}", v.green())
         } else {
-            println!("  {}", v)
+            println!("  {v}")
         }
     }
 

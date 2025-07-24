@@ -69,7 +69,7 @@ pub fn check_sha256sum(path: &Path, file: &str) -> anyhow::Result<bool> {
         }
     }
     let digest = format!("{:x}", hasher.finalize());
-    let sha256_file = path.join(format!("{}.sha256", file));
+    let sha256_file = path.join(format!("{file}.sha256"));
     let sha256_str = fs::read_to_string(&sha256_file)?;
     Ok(digest == sha256_str.trim())
 }

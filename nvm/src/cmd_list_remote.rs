@@ -19,7 +19,7 @@ pub(super) fn run(prefix: Option<String>) -> anyhow::Result<()> {
     if let Some(prefix) = prefix {
         vec.retain(|v| v.starts_with(&prefix));
         if vec.is_empty() {
-            println!("No versions found with prefix: {}", prefix);
+            println!("No versions found with prefix: {prefix}");
             return Ok(());
         }
     }
@@ -31,7 +31,7 @@ pub(super) fn run(prefix: Option<String>) -> anyhow::Result<()> {
         } else if local_versions_set.contains(&v) {
             println!("  {:7} =>  {}", key.green(), v.green())
         } else {
-            println!("  {:7} =>  {}", key, v)
+            println!("  {key:7} =>  {v}")
         }
     }
 

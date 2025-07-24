@@ -35,7 +35,7 @@ fn get_index() -> anyhow::Result<Indexes> {
 
     let spinner = ProgressBar::new_spinner();
     spinner.enable_steady_tick(time::Duration::from_millis(100));
-    spinner.set_message(format!("Fetching {}", url));
+    spinner.set_message(format!("Fetching {url}"));
 
     let res = Client::new()
         .get(url)
@@ -70,9 +70,9 @@ pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<
     sp.enable_steady_tick(time::Duration::from_millis(100));
 
     let client = Client::new();
-    let url = get_node_url(&format!("v{}/SHASUMS256.txt", version));
+    let url = get_node_url(&format!("v{version}/SHASUMS256.txt"));
 
-    sp.set_message(format!("Fetching Checksum {}", url));
+    sp.set_message(format!("Fetching Checksum {url}"));
 
     let sha256_txt = client
         .get(url)
@@ -89,13 +89,13 @@ pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<
         anyhow::bail!("Not found checksum for {}.", file);
     };
     fs::write(
-        cache.join(format!("{}.sha256", file)),
+        cache.join(format!("{file}.sha256")),
         sha256_expected.as_bytes(),
     )?;
 
-    let url = get_node_url(&format!("v{}/{}", version, file));
+    let url = get_node_url(&format!("v{version}/{file}"));
 
-    sp.set_message(format!("HEAD {}", url));
+    sp.set_message(format!("HEAD {url}"));
 
     let resp = client
         .head(&url)
@@ -119,7 +119,7 @@ pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<
         .progress_chars("#>-"));
     pb.enable_steady_tick(time::Duration::from_millis(100));
 
-    sp.set_message(format!("Downloading {}", url));
+    sp.set_message(format!("Downloading {url}"));
 
     let mut start = 0;
     while start < content_length {

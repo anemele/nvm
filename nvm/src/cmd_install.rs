@@ -25,7 +25,7 @@ pub(super) fn run(version: &str) -> anyhow::Result<()> {
     let paths = utils::get_paths()?;
 
     // check if the version is already installed
-    let dest = paths.home.join(format!("v{}", mapped_version));
+    let dest = paths.home.join(format!("v{mapped_version}"));
     if !dest.exists() {
         fs::create_dir(&dest)?;
     }
@@ -46,6 +46,6 @@ pub(super) fn run(version: &str) -> anyhow::Result<()> {
 
     local::extract_dist(&cache, &dest)?;
 
-    println!("Installed: {}", mapped_version);
+    println!("Installed: {mapped_version}");
     Ok(())
 }
