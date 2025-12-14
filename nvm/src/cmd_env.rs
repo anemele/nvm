@@ -3,7 +3,7 @@ use nvm_core::consts;
 #[inline]
 fn print_env(key: &str, value: &str) {
     #[cfg(unix)]
-    println!("{}={}", key, value);
+    println!("{key}={value}");
     #[cfg(windows)]
     println!("set {key}={value}");
 }

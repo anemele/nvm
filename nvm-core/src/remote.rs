@@ -83,10 +83,10 @@ pub fn download_dist(version: &str, file: &str, cache: &Path) -> anyhow::Result<
     // dbg!(&file);
     // dbg!(&sha256_txt);
     let Some(sha256_line) = sha256_txt.lines().find(|line| line.ends_with(file)) else {
-        anyhow::bail!("Not found SHASUMS256.txt for {}.", file);
+        anyhow::bail!("Not found SHASUMS256.txt for {file}.");
     };
     let Some(sha256_expected) = sha256_line.split_whitespace().next() else {
-        anyhow::bail!("Not found checksum for {}.", file);
+        anyhow::bail!("Not found checksum for {file}.");
     };
     fs::write(
         cache.join(format!("{file}.sha256")),

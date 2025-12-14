@@ -4,10 +4,10 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 fn get_node_home() -> anyhow::Result<PathBuf> {
-    if let Ok(Some(home)) = homedir::get_my_home() {
+    if let Ok(Some(home)) = homedir::my_home() {
         Ok(home.join(NODE_HOME))
     } else {
-        anyhow::bail!("failed to get NODE_HOME: ~/{}", NODE_HOME)
+        anyhow::bail!("failed to get NODE_HOME: ~/{NODE_HOME}")
     }
 }
 

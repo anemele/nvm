@@ -11,7 +11,7 @@ pub(super) fn run(version: &str) -> anyhow::Result<()> {
         Some(v) => v.to_string(),
         None => {
             if !vec.contains(&version.to_string()) {
-                anyhow::bail!("version not found: {}", version);
+                anyhow::bail!("version not found: {version}");
             }
             eprintln!(
                 "{}: {} is not a latest version",

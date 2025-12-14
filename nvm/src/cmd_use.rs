@@ -71,7 +71,7 @@ pub(super) fn run(version: Option<String>) -> anyhow::Result<()> {
     if ok {
         println!("Use {map_version}");
     } else {
-        anyhow::bail!("Fail to use {}", version);
+        anyhow::bail!("Fail to use {version}");
     }
 
     Ok(())
