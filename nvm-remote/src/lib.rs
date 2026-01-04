@@ -1,13 +1,15 @@
-use crate::semver::{VersionMap, VersionVec, map_versions};
+use std::io::Write;
+use std::path::Path;
+use std::{fs, time};
+
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use reqwest::blocking::Client;
 use reqwest::header::CONTENT_LENGTH;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
-use std::io::Write;
-use std::path::Path;
-// use serde_json::Value;
-use std::{fs, time};
+
+use nvm_common::consts;
+use nvm_common::semver::{VersionMap, VersionVec, map_versions};
 
 #[derive(Debug, Deserialize)]
 pub struct Index {
@@ -27,7 +29,7 @@ pub struct Index {
 pub type Indexes = Vec<Index>;
 
 fn get_node_url(path: &str) -> String {
-    crate::consts::get_mirror() + path
+    consts::get_mirror() + path
 }
 
 fn get_index() -> anyhow::Result<Indexes> {

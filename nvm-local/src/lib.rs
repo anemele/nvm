@@ -6,9 +6,7 @@ use std::time::Duration;
 use indicatif::ProgressBar;
 use sha2::{Digest, Sha256};
 
-use crate::consts::UNPACKED_SUCCESS_FILE;
-use crate::utils;
-use crate::utils::is_valid_nodejs;
+use nvm_common::path as paths;
 
 #[derive(Default, Debug)]
 pub struct LocalVersions {
@@ -34,17 +32,17 @@ fn test_get_ver_from_name() {
 }
 
 fn get_current_version() -> anyhow::Result<String> {
-    let paths = utils::get_paths()?;
+    let paths = paths::get_paths()?;
     let link = fs::read_link(paths.current)?;
     get_ver_from_name(link).ok_or_else(|| anyhow::anyhow!("failed to get current version"))
 }
 
 pub fn query() -> anyhow::Result<LocalVersions> {
-    let patterns = format!("{}/v*/node-v*", utils::get_paths()?.home.display());
+    let patterns = format!("{}/v*/node-v*", paths::get_paths()?.home.display());
 
     let versions = glob::glob(&patterns)?
         .filter_map(|path| path.ok())
-        .filter(|path| path.parent().is_some_and(is_valid_nodejs))
+        .filter(|path| path.parent().is_some_and(paths::is_valid_nodejs))
         .filter_map(get_ver_from_name)
         .collect();
     // dbg!(&versions);
@@ -91,7 +89,7 @@ pub fn extract_dist(src: &Path, dest: &Path) -> anyhow::Result<()> {
     #[cfg(windows)]
     let ok = sevenz_rust::decompress_file(src, dest).is_ok();
 
-    let dot_file = dest.join(UNPACKED_SUCCESS_FILE);
+    let dot_file = paths::get_dot_path(dest);
     if !ok {
         if dot_file.exists() {
             let _ = fs::remove_file(&dot_file);

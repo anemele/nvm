@@ -1,7 +1,7 @@
-use crate::consts::{NODE_CACHE, NODE_CURRENT, NODE_HOME, UNPACKED_SUCCESS_FILE};
-use std::env::consts::{ARCH, OS};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use crate::consts::{NODE_CACHE, NODE_CURRENT, NODE_HOME, UNPACKED_SUCCESS_FILE};
 
 fn get_node_home() -> anyhow::Result<PathBuf> {
     if let Ok(Some(home)) = homedir::my_home() {
@@ -37,38 +37,12 @@ pub fn get_paths() -> anyhow::Result<NodePaths> {
     Ok(paths)
 }
 
-pub struct Dist {
-    pub dir: String,
-    pub ext: String,
+#[inline]
+pub fn get_dot_path(path: &Path) -> PathBuf {
+    path.join(UNPACKED_SUCCESS_FILE)
 }
 
-pub fn get_dist(version: &str) -> Dist {
-    // node-v{v}-{os}-{arch}.{ext}
-    // v:   {semver}
-    // os:  win, linux, darwin
-    // arc: x64, x86, arm64, ...
-    // ext: zip, 7z, tar.gz, tar.xz
-
-    let os = match OS {
-        "windows" => "win",
-        "macos" => "darwin",
-        x => x,
-    };
-    let arch = match ARCH {
-        "x86_64" => "x64",
-        "arm" => "arm64",
-        x => x,
-    };
-    let dir = format!("node-v{version}-{os}-{arch}");
-    // use .7z on Windows, tar.xz on *NIX for a smaller size.
-    let ext = match os {
-        "win" => "7z",
-        _ => "tar.xz",
-    }
-    .to_string();
-    Dist { dir, ext }
-}
-
+#[inline]
 pub fn is_valid_nodejs(path: &Path) -> bool {
     path.join(UNPACKED_SUCCESS_FILE).exists()
 }

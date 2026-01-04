@@ -1,11 +1,23 @@
 [workspace]
 resolver = "3"
-members = ["nvm-core", "nvm"]
+members = ["nvm", "nvm-common", "nvm-local", "nvm-remote"]
 
 [workspace.package]
-version = "0.7.4"
+version = "0.7.6"
 license = "MIT"
 edition = "2024"
 
 [workspace.dependencies]
 anyhow = "1.0.100"
+
+[profile.release]
+# 最高级别优化（兼顾性能和产物体积）
+opt-level = 3
+# 轻量链接时优化（关键，保持多crate的树摇优势，缩小产物大小，兼顾编译速度）
+lto = "thin"
+# 关闭panic回溯（个人小程序可接受，大幅减少产物体积）
+panic = "abort"
+# 剥离调试信息（进一步缩小产物，不影响运行）
+strip = "debuginfo"
+# 开启死代码消除（强化未使用代码的优化剔除）
+codegen-units = 1

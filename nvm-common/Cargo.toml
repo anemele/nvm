@@ -1,0 +1,10 @@
+[package]
+name = "nvm-common"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+
+semver = "1.0.27"
+homedir = "0.3.6"
