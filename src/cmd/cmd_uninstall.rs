@@ -1,12 +1,14 @@
+use std::fs;
+
 use colored::Colorize;
 use dialoguer::MultiSelect;
 use dialoguer::theme::ColorfulTheme;
-use nvm_core::local;
-use nvm_core::semver;
-use nvm_core::utils;
-use std::fs;
 
-pub(super) fn run(versions: Vec<String>) -> anyhow::Result<()> {
+use crate::core::local;
+use crate::core::semver;
+use crate::core::utils;
+
+pub fn run(versions: Vec<String>) -> anyhow::Result<()> {
     let local_versions = local::query()?;
 
     let versions: Vec<String> = if versions.is_empty() {

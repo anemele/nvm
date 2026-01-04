@@ -1,7 +1,8 @@
-use crate::consts::{NODE_CACHE, NODE_CURRENT, NODE_HOME, UNPACKED_SUCCESS_FILE};
 use std::env::consts::{ARCH, OS};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use super::consts::{NODE_CACHE, NODE_CURRENT, NODE_HOME, UNPACKED_SUCCESS_FILE};
 
 fn get_node_home() -> anyhow::Result<PathBuf> {
     if let Ok(Some(home)) = homedir::my_home() {

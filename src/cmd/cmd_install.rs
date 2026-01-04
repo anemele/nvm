@@ -1,11 +1,12 @@
 use std::fs;
 
 use colored::Colorize;
-use nvm_core::local;
-use nvm_core::remote;
-use nvm_core::utils;
 
-pub(super) fn run(version: &str) -> anyhow::Result<()> {
+use crate::core::local;
+use crate::core::remote;
+use crate::core::utils;
+
+pub fn run(version: &str) -> anyhow::Result<()> {
     let (map, _, vec) = remote::get_versions()?;
     let mapped_version = match map.get(version) {
         Some(v) => v.to_string(),

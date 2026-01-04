@@ -1,7 +1,8 @@
 use colored::Colorize;
-use nvm_core::local;
 
-pub(super) fn run() -> anyhow::Result<()> {
+use crate::core::local;
+
+pub fn run() -> anyhow::Result<()> {
     let local_versions = local::query()?;
     // dbg!(&local_versions);
 

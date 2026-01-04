@@ -1,4 +1,4 @@
-use nvm_core::consts;
+use crate::core::consts;
 
 #[inline]
 fn print_env(key: &str, value: &str) {
@@ -8,7 +8,7 @@ fn print_env(key: &str, value: &str) {
     println!("set {key}={value}");
 }
 
-pub(super) fn run() -> anyhow::Result<()> {
+pub fn run() -> anyhow::Result<()> {
     print_env(consts::KEY_NVM_DIST_MIRROR, consts::NVM_DIST_MIRROR);
 
     Ok(())

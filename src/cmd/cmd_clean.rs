@@ -1,9 +1,10 @@
 use std::fs;
 
 use dialoguer::{Confirm, theme::ColorfulTheme};
-use nvm_core::utils;
 
-pub(super) fn run(yes: bool) -> anyhow::Result<()> {
+use crate::core::utils;
+
+pub fn run(yes: bool) -> anyhow::Result<()> {
     let paths = utils::get_paths()?;
 
     let confirmation = yes

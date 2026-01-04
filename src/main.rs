@@ -1,12 +1,7 @@
-use clap::Parser;
+mod cmd;
+mod core;
 
-mod cmd_clean;
-mod cmd_env;
-mod cmd_install;
-mod cmd_list_local;
-mod cmd_list_remote;
-mod cmd_uninstall;
-mod cmd_use;
+use clap::Parser;
 
 #[derive(Parser)]
 #[clap(name = "nvm", author, version, about = "Nodejs Version Manager")]
@@ -44,6 +39,7 @@ enum Cli {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
     use Cli::*;
+    use cmd::*;
     match cli {
         List => cmd_list_local::run(),
         ListRemote { prefix } => cmd_list_remote::run(prefix),

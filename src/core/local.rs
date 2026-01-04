@@ -6,9 +6,8 @@ use std::time::Duration;
 use indicatif::ProgressBar;
 use sha2::{Digest, Sha256};
 
-use crate::consts::UNPACKED_SUCCESS_FILE;
-use crate::utils;
-use crate::utils::is_valid_nodejs;
+use super::consts::UNPACKED_SUCCESS_FILE;
+use super::utils;
 
 #[derive(Default, Debug)]
 pub struct LocalVersions {
@@ -44,7 +43,7 @@ pub fn query() -> anyhow::Result<LocalVersions> {
 
     let versions = glob::glob(&patterns)?
         .filter_map(|path| path.ok())
-        .filter(|path| path.parent().is_some_and(is_valid_nodejs))
+        .filter(|path| path.parent().is_some_and(utils::is_valid_nodejs))
         .filter_map(get_ver_from_name)
         .collect();
     // dbg!(&versions);

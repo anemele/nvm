@@ -2,12 +2,13 @@ use std::fs;
 
 use dialoguer::Select;
 use dialoguer::theme::ColorfulTheme;
-use nvm_core::local;
-use nvm_core::semver;
-use nvm_core::utils;
-use nvm_core::utils::get_dist;
 
-pub(super) fn run(version: Option<String>) -> anyhow::Result<()> {
+use crate::core::local;
+use crate::core::semver;
+use crate::core::utils;
+use crate::core::utils::get_dist;
+
+pub fn run(version: Option<String>) -> anyhow::Result<()> {
     let local_versions = local::query()?;
 
     let version = match version {

@@ -1,9 +1,11 @@
-use colored::Colorize;
-use nvm_core::local;
-use nvm_core::remote;
 use std::collections::HashSet;
 
-pub(super) fn run(prefix: Option<String>) -> anyhow::Result<()> {
+use colored::Colorize;
+
+use crate::core::local;
+use crate::core::remote;
+
+pub fn run(prefix: Option<String>) -> anyhow::Result<()> {
     let (map, mut vec, _) = remote::get_versions()?;
 
     let local_versions = local::query().unwrap_or_default();

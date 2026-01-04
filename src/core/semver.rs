@@ -1,6 +1,7 @@
-use semver::Version;
 use std::collections::HashMap;
 use std::str::FromStr;
+
+use semver::Version;
 
 pub type VersionMap = HashMap<String, Version>;
 pub type VersionVec = Vec<String>;
